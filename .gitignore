@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+MSDscript/MSDscript/MSDscript/msdscript
+
+# DS_Store
+.DS_Store
