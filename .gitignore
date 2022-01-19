@@ -30,4 +30,8 @@
 *.exe
 *.out
 *.app
-/01-hw1/msdscript
+msdscript
+
+# Environment
+/.vscode
+*.json
