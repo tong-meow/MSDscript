@@ -108,8 +108,8 @@ void Add::print(std::ostream& os){
 void Add::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
     // there are 2 occasions that Add doesn't need ()
     // 1. it is at the top level
-    // 2. it is inside a '+' but at the left side. e.g. 1 + 2 + 3, the '1 + 2' needs no ()
-    if ((!insideAdd && !insideMult) || (insideAdd && lhs)){
+    // 2. it is inside a '+' but at the right side. e.g. 1 + 2 + 3, the '2 + 3' needs no ()
+    if ((!insideAdd && !insideMult) || (insideAdd && !lhs)){
         (this -> lhs) -> pretty_print_at(os, true, false, true);
         os << " + ";
         (this -> rhs) -> pretty_print_at(os, true, false, false);
@@ -159,9 +159,9 @@ void Mult::print(std::ostream& os){
 
 void Mult::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
     // there is only 1 occasion that Mult needs ()
-    // 1. it is inside a mult and is at the right side
-    //    e.g. 3 * (2 * 1), the (2 * 1) needs ()
-    if (insideMult && !lhs){
+    // 1. it is inside a mult and is at the left side
+    //    e.g. (3 * 2) * 1, the (3 * 2) needs ()
+    if (insideMult && lhs){
         os << '(';
         (this -> lhs) -> pretty_print_at(os, false, true, true);
         os << " * ";

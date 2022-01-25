@@ -188,16 +188,16 @@ TEST_CASE("Num Pretty Print"){
 
 TEST_CASE("Add Pretty Print"){
     Expr *test1 = new Add(new Num(3), new Add(new Num(1), new Num(2)));
-    CHECK((test1 -> to_pretty_string()) == "3 + (1 + 2)");
+    CHECK((test1 -> to_pretty_string()) == "3 + 1 + 2");
     Expr *test2 = new Add(new Add(new Num(3), new Num(1)), new Num(2));
-    CHECK((test2 -> to_pretty_string()) == "3 + 1 + 2");
+    CHECK((test2 -> to_pretty_string()) == "(3 + 1) + 2");
 }
 
 TEST_CASE("Mult Pretty Print"){
     Expr *test1 = new Mult(new Num(3), new Mult(new Num(1), new Num(2)));
-    CHECK((test1 -> to_pretty_string()) == "3 * (1 * 2)");
+    CHECK((test1 -> to_pretty_string()) == "3 * 1 * 2");
     Expr *test2 = new Mult(new Mult(new Num(3), new Num(1)), new Num(2));
-    CHECK((test2 -> to_pretty_string()) == "3 * 1 * 2");
+    CHECK((test2 -> to_pretty_string()) == "(3 * 1) * 2");
 }
 
 TEST_CASE("Add and Mult Mixed Pretty Print"){
@@ -207,12 +207,15 @@ TEST_CASE("Add and Mult Mixed Pretty Print"){
     // 1 * (2 + 3)
     Expr *test2 = new Mult(new Num(1), new Add(new Num(2), new Num(3)));
     CHECK((test2 -> to_pretty_string()) == "1 * (2 + 3)");
-    // 1 * ((2 + 3) * 4)
+    // 1 * (2 + 3) * 4
     Expr *test3 = new Mult(new Num(1), new Mult(new Add(new Num(2), new Num(3)), new Num(4)));
-    CHECK((test3 -> to_pretty_string()) == "1 * ((2 + 3) * 4)");
+    CHECK((test3 -> to_pretty_string()) == "1 * (2 + 3) * 4");
     // (1 + 2) * (3 + 4)
     Expr *test4 = new Mult(new Add(new Num(1), new Num(2)), new Add(new Num(3), new Num(4)));
     CHECK((test4 -> to_pretty_string()) == "(1 + 2) * (3 + 4)");
+    // (1 * (2 + 3)) * 4
+    Expr *test5 = new Mult(new Mult(new Num(1), new Add(new Num(2), new Num(3))), new Num(4));
+    CHECK((test5 -> to_pretty_string()) == "(1 * (2 + 3)) * 4");
 }
 
 TEST_CASE("Variable Pretty Print"){
