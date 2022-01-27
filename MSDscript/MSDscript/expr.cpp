@@ -177,26 +177,26 @@ void Mult::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bo
 
 // subclass 4: Variable
 
-Variable::Variable(std::string str){
+Var::Var(std::string str){
     this -> str = str;
 }
 
-bool Variable::equals(Expr *e){
-    Variable *target = dynamic_cast<Variable*>(e);
+bool Var::equals(Expr *e){
+    Var *target = dynamic_cast<Var*>(e);
     if (target == NULL) return false;
     return ((this->str) == (target->str));
 }
 
-int Variable::interp(){
+int Var::interp(){
     // throw exception since there is no integer value for a string
     throw std::runtime_error("Error: Expr contains a string element.");
 }
 
-bool Variable::has_variable(){
+bool Var::has_variable(){
     return true;
 }
 
-Expr* Variable::subst(std::string s, Expr *e){
+Expr* Var::subst(std::string s, Expr *e){
     if ((this -> str) == s){
         return e;
     }else{
@@ -204,10 +204,10 @@ Expr* Variable::subst(std::string s, Expr *e){
     }
 }
 
-void Variable::print(std::ostream& os){
+void Var::print(std::ostream& os){
     os << (this->str);
 }
 
-void Variable::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
+void Var::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
     os << (this->str);
 }

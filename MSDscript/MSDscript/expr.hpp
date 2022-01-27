@@ -85,12 +85,12 @@ public:
 };
 
 
-// subclass 4: Variable
-class Variable : public Expr{
+// subclass 4: Var
+class Var : public Expr{
 public:
     std::string str;
     
-    Variable(std::string str);
+    Var(std::string str);
     virtual bool equals(Expr *e);
     virtual int interp();
     virtual bool has_variable();
