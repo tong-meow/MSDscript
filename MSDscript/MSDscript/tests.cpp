@@ -23,7 +23,7 @@ TEST_CASE("Add Equals"){
     CHECK(test-> equals(new Add(new Num(2), new Num(5))) == true);
     CHECK(test-> equals(new Add(new Num(5), new Num(2))) == false);
     CHECK(test-> equals(new Add(new Num(4), new Num(10))) == false);
-    CHECK((new Num(2))-> equals(new Mult(new Num(3), new Num(6))) == false);
+    CHECK(test-> equals(new Mult(new Num(3), new Num(6))) == false);
 }
 
 TEST_CASE("Mult Equals"){
@@ -31,14 +31,14 @@ TEST_CASE("Mult Equals"){
     CHECK(test-> equals(new Mult(new Num(3), new Num(6))) == true);
     CHECK(test-> equals(new Mult(new Num(6), new Num(3))) == false);
     CHECK(test-> equals(new Mult(new Num(1), new Num(2))) == false);
-    CHECK((new Num(2))-> equals(new Add(new Num(2), new Num(5))) == false);
+    CHECK(test-> equals(new Add(new Num(2), new Num(5))) == false);
 }
 
-TEST_CASE("Variable Equals"){
-    Expr *test = new Variable("Happy2022");
-    CHECK(test-> equals(new Variable("Happy2022")) == true);
-    CHECK(test-> equals(new Variable("PlayStation")) == false);
-    CHECK(test-> equals(new Variable("XBox")) == false);
+TEST_CASE("Var Equals"){
+    Expr *test = new Var("Happy2022");
+    CHECK(test-> equals(new Var("Happy2022")) == true);
+    CHECK(test-> equals(new Var("PlayStation")) == false);
+    CHECK(test-> equals(new Var("XBox")) == false);
     CHECK(test-> equals(new Mult(new Num(1), new Num(2))) == false);
 }
 
@@ -56,7 +56,7 @@ TEST_CASE("Add Interp"){
     // test == 6
     CHECK((test-> interp()) == 6);
     // throws exception
-    CHECK_THROWS_WITH( (new Add(new Variable("Wrong"), new Num(1))) -> interp(),
+    CHECK_THROWS_WITH( (new Add(new Var("Wrong"), new Num(1))) -> interp(),
                       "Error: Expr contains a string element." );
 }
 
@@ -66,13 +66,13 @@ TEST_CASE("Mult Interp"){
     // test == 6
     CHECK((test-> interp()) == 6);
     // throws exception
-    CHECK_THROWS_WITH( (new Mult(new Variable("Wrong"), new Num(1))) -> interp(),
+    CHECK_THROWS_WITH( (new Mult(new Var("Wrong"), new Num(1))) -> interp(),
                       "Error: Expr contains a string element." );
 }
 
-TEST_CASE("Variable Interp"){
+TEST_CASE("Var Interp"){
     // test = "owls"
-    Expr *test = new Variable("owls");
+    Expr *test = new Var("owls");
     // throws exception
     CHECK_THROWS_WITH(test -> interp(), "Error: Expr contains a string element.");
 }
@@ -88,19 +88,19 @@ TEST_CASE("Num Has Variable"){
 TEST_CASE("Add Has Variable"){
     Expr *test1 = new Add(new Add(new Num(1), new Num(1)), new Num(1));
     CHECK((test1 -> has_variable()) == false);
-    Expr *test2 = new Add(new Add(new Num(1), new Variable("owls")), new Num(1));
+    Expr *test2 = new Add(new Add(new Num(1), new Var("owls")), new Num(1));
     CHECK((test2 -> has_variable()) == true);
 }
 
 TEST_CASE("Mult Has Variable"){
     Expr *test1 = new Mult(new Add(new Num(1), new Num(1)), new Num(1));
     CHECK((test1 -> has_variable()) == false);
-    Expr *test2 = new Mult(new Mult(new Num(1), new Variable("owls")), new Num(1));
+    Expr *test2 = new Mult(new Mult(new Num(1), new Var("owls")), new Num(1));
     CHECK((test2 -> has_variable()) == true);
 }
 
 TEST_CASE("Variable Has Variable"){
-    CHECK((new Variable("owls")) -> has_variable() == true);
+    CHECK((new Var("owls")) -> has_variable() == true);
 }
 
 
@@ -108,45 +108,45 @@ TEST_CASE("Variable Has Variable"){
 // SUBST TESTS
 
 TEST_CASE("Num Subst"){
-    CHECK(((new Num(2))->subst("owls", new Variable("snowy owls"))) ->equals((new Num(2))));
+    CHECK(((new Num(2))->subst("owls", new Var("snowy owls"))) ->equals((new Num(2))));
     CHECK(((new Num(2))->subst("owls", new Num(3))) ->equals((new Num(2))));
 }
 
 TEST_CASE("Add Subst"){
     // test1 contains no string
     Expr *test1 = new Add(new Num(3), new Mult(new Num(1), new Num(5)));
-    CHECK(((test1 -> subst("owls", new Variable("snowy owls"))) ->equals(test1)));
+    CHECK(((test1 -> subst("owls", new Var("snowy owls"))) ->equals(test1)));
     
     // test2 contains target string
-    Expr *test2 = new Add(new Num(3), new Mult(new Variable("owls"), new Num(5)));
-    CHECK(((test2 -> subst("owls", new Variable("snowy owls"))) ->equals(
-       new Add(new Num(3), new Mult(new Variable("snowy owls"), new Num(5))))));
+    Expr *test2 = new Add(new Num(3), new Mult(new Var("owls"), new Num(5)));
+    CHECK(((test2 -> subst("owls", new Var("snowy owls"))) ->equals(
+       new Add(new Num(3), new Mult(new Var("snowy owls"), new Num(5))))));
     
     // test3 contains string but != target
-    Expr *test3 = new Add(new Num(3), new Mult(new Variable("barn owls"), new Num(5)));
-    CHECK(((test3 -> subst("owls", new Variable("snowy owls"))) -> equals(test3)));
+    Expr *test3 = new Add(new Num(3), new Mult(new Var("barn owls"), new Num(5)));
+    CHECK(((test3 -> subst("owls", new Var("snowy owls"))) -> equals(test3)));
 }
 
 TEST_CASE("Mult Subst"){
     // test1 contains no string
     Expr *test1 = new Mult(new Num(3), new Add(new Num(1), new Num(5)));
-    CHECK(((test1 -> subst("owls", new Variable("snowy owls"))) ->equals(test1)));
+    CHECK(((test1 -> subst("owls", new Var("snowy owls"))) ->equals(test1)));
     
     // test2 contains target string
-    Expr *test2 = new Mult(new Num(3), new Add(new Variable("owls"), new Num(5)));
-    CHECK(((test2 -> subst("owls", new Variable("snowy owls"))) ->equals(
-       new Mult(new Num(3), new Add(new Variable("snowy owls"), new Num(5))))));
+    Expr *test2 = new Mult(new Num(3), new Add(new Var("owls"), new Num(5)));
+    CHECK(((test2 -> subst("owls", new Var("snowy owls"))) ->equals(
+       new Mult(new Num(3), new Add(new Var("snowy owls"), new Num(5))))));
     
     // test3 contains string but != target
-    Expr *test3 = new Mult(new Num(3), new Mult(new Variable("barn owls"), new Num(5)));
-    CHECK(((test3 -> subst("owls", new Variable("snowy owls"))) -> equals(test3)));
+    Expr *test3 = new Mult(new Num(3), new Mult(new Var("barn owls"), new Num(5)));
+    CHECK(((test3 -> subst("owls", new Var("snowy owls"))) -> equals(test3)));
 }
 
-TEST_CASE("Variable Subst"){
-    CHECK(((new Variable("owls"))->subst("owls", new Variable("snowy owls")))
-          ->equals((new Variable("snowy owls"))));
-    CHECK(((new Variable("barn owls"))->subst("owls", new Variable("snowy owls")))
-          ->equals((new Variable("barn owls"))));
+TEST_CASE("Var Subst"){
+    CHECK(((new Var("owls"))->subst("owls", new Var("snowy owls")))
+          ->equals((new Var("snowy owls"))));
+    CHECK(((new Var("barn owls"))->subst("owls", new Var("snowy owls")))
+          ->equals((new Var("barn owls"))));
 }
 
 
@@ -173,7 +173,7 @@ TEST_CASE("Mult Print"){
 }
 
 TEST_CASE("Variable Print"){
-    Expr *test1 = new Variable("X");
+    Expr *test1 = new Var("X");
     CHECK((test1 -> to_string()) == "X");
 }
 
@@ -183,7 +183,7 @@ TEST_CASE("Variable Print"){
 
 TEST_CASE("Num Pretty Print"){
     Expr *test1 = new Num(10);
-    CHECK((test1 -> to_string()) == "10");
+    CHECK((test1 -> to_pretty_string()) == "10");
 }
 
 TEST_CASE("Add Pretty Print"){
@@ -218,7 +218,7 @@ TEST_CASE("Add and Mult Mixed Pretty Print"){
     CHECK((test5 -> to_pretty_string()) == "(1 * (2 + 3)) * 4");
 }
 
-TEST_CASE("Variable Pretty Print"){
-    Expr *test1 = new Variable("Y");
-    CHECK((test1 -> to_string()) == "Y");
+TEST_CASE("Var Pretty Print"){
+    Expr *test1 = new Var("Y");
+    CHECK((test1 -> to_pretty_string()) == "Y");
 }
