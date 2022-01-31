@@ -11,6 +11,15 @@
 #include <stdio.h>
 #include <string>
 
+
+typedef enum {
+    prec_none,      // = 0
+    prec_let,       // = 1
+    prec_add,       // = 2
+    prec_mult       // = 3
+} precedence_t;
+
+
 // template Expr
 class Expr {
 public:
@@ -32,7 +41,9 @@ public:
     // pretty_print is used to print the Expr to a referenced ostream (with better layout)
     void pretty_print(std::ostream& os);
     // pretty_print_at is the helper of pretty_print()
-    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs) = 0;
+//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs) = 0;
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces) = 0;
     // to_pretty_string is used to convert an Expr to its string version with pretty_print()
     std::string to_pretty_string();
 };
@@ -49,7 +60,9 @@ public:
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
 };
 
 
@@ -65,7 +78,9 @@ public:
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
 };
 
 
@@ -81,7 +96,9 @@ public:
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
 };
 
 
@@ -96,8 +113,29 @@ public:
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
 };
 
+
+// subclass 5: _let
+// 〈expr〉 = _let 〈variable〉 = 〈expr〉 _in 〈expr〉
+class _let : public Expr{
+public:
+    Var* varName;
+    Expr* rhs;
+    Expr* body;
+    
+    _let(Var* varName, Expr* rhs, Expr* body);
+    virtual bool equals(Expr* e);
+    virtual int interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *e);
+    virtual void print(std::ostream& os);
+//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
+};
 
 #endif /* expr_hpp */

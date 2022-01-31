@@ -42,6 +42,15 @@ TEST_CASE("Var Equals"){
     CHECK(test-> equals(new Mult(new Num(1), new Num(2))) == false);
 }
 
+TEST_CASE("_let Equals"){
+    // _let x = 5;
+    // _in x + 1;
+    _let *test = new _let(new Var("x"), new Num(5), new Add(new Var("x"), new Num(1)));
+    CHECK(test-> equals(new _let(new Var("x"), new Num(5), new Add(new Var("x"), new Num(1)))) == true);
+    CHECK(test-> equals(new _let(new Var("y"), new Num(5), new Add(new Var("y"), new Num(1)))) == false);
+    CHECK(test-> equals(new Num(6)) == false);
+}
+
 
 // INTERP TESTS
 
@@ -77,6 +86,74 @@ TEST_CASE("Var Interp"){
     CHECK_THROWS_WITH(test -> interp(), "Error: Expr contains a string element.");
 }
 
+TEST_CASE("_let Interp"){
+    // test1 =
+    //        _let x = 5;
+    //        _in 6;
+    Expr *test1 = new _let(new Var("x"), new Num(5), new Num(6));
+    CHECK( test1 -> interp() == 6);
+    // test2 =
+    //        _let x = 5;
+    //        _in x + 1;
+    Expr *test2 = new _let(new Var("x"),
+                           new Num(5),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK((test2 -> interp()) == 6);
+    // test3 =
+    //        _let x = 5;
+    //        _in y + 1;
+    Expr *test3 = new _let(new Var("x"),
+                           new Num(5),
+                           new Add(new Var("y"), new Num(1)));
+    CHECK_THROWS_WITH( test3 -> interp(),
+                      "Error: Expr contains a string element." );
+    // test4 =
+    //        _let x = 5;
+    //        _in _let x = 3;
+    //            _in x + 1;
+    Expr *test4 = new _let(new Var("x"),
+                           new Num(5),
+                           new _let(new Var("x"),
+                                    new Num(3),
+                                    new Add(new Var("x"), new Num(1))));
+    CHECK(test4 -> interp() == 4);
+    // test5 =
+    //        _let x = 5;
+    //        _in _let y = 3;
+    //            _in x + 1;
+    Expr *test5 = new _let(new Var("x"), new Num(5),
+                           new _let(new Var("y"),
+                                    new Num(3),
+                                    new Add(new Var("x"), new Num(1))));
+    CHECK((test5 -> interp()) == 6);
+    // test6 =
+    //        _let x = 5;
+    //        _in _let x = x + 1;
+    //            _in x + 1;
+    Expr *test6 = new _let(new Var("x"), new Num(5),
+                           new _let(new Var("x"),
+                                    new Add(new Var("x"), new Num(1)),
+                                    new Add(new Var("x"), new Num(1))));
+    CHECK((test6 -> interp()) == 7);
+    // test7 =
+    //        _let x = x + 1;
+    //        _in x + 1;
+    Expr *test7 = new _let(new Var("x"),
+                           new Add(new Var("x"), new Num(1)),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK_THROWS_WITH( test7 -> interp(),
+                      "Error: Expr contains a string element." );
+    // test8 =
+    //        _let x = _let x = 3
+    //                 _in x + 1
+    //        _in x + 1
+    Expr *test8 = new _let(new Var("x"),
+                           new _let(new Var("x"), new Num(3),
+                                    new Add(new Var("x"), new Num(1))),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK((test8 -> interp()) == 5);
+}
+
 
 
 // HAS_VARIABLE TESTS
@@ -101,6 +178,35 @@ TEST_CASE("Mult Has Variable"){
 
 TEST_CASE("Variable Has Variable"){
     CHECK((new Var("owls")) -> has_variable() == true);
+}
+
+TEST_CASE("_let Has Variable"){
+    // test1 =
+    //          _let x = 5;
+    //          _in 6;
+    Expr *test1 = new _let(new Var("x"), new Num(5), new Num(6));
+    CHECK(test1 -> has_variable() == false);
+    // test2 =
+    //          _let x = x + 1;
+    //          _in 6;
+    Expr *test2 = new _let(new Var("x"),
+                           new Add(new Var("x"), new Num(1)),
+                           new Num(6));
+    CHECK(test2 -> has_variable() == true);
+    // test3 =
+    //          _let x = 5;
+    //          _in x + 1;
+    Expr *test3 = new _let(new Var("x"),
+                           new Num(5),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK(test3 -> has_variable() == true);
+    // test4 =
+    //          _let x = x + 1;
+    //          _in x + 1;
+    Expr *test4 = new _let(new Var("x"),
+                           new Add(new Var("x"), new Num(1)),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK(test4 -> has_variable() == true);
 }
 
 
@@ -149,6 +255,30 @@ TEST_CASE("Var Subst"){
           ->equals((new Var("barn owls"))));
 }
 
+TEST_CASE("_let Subst"){
+    // test1 =
+    //          _let x = 5;
+    //          _in 6;          -> subst ("x", 1)
+    Expr *test1 = new _let(new Var("x"), new Num(5), new Num(6));
+    CHECK((test1 -> subst("x", new Num(1))) -> equals(test1));
+    // test2 =
+    //          _let x = x + 1;
+    //          _in x + 1;          -> subst ("x", 5)
+    Expr *test2 = new _let(new Var("x"),
+                           new Add(new Var("x"), new Num(1)),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK(test2 -> subst("x", new Num(5)) -> equals(
+          new _let(new Var("x"),
+                   new Add(new Num(5), new Num(1)),
+                   new Add(new Var("x"), new Num(1)))));
+    // test3 =
+    //          _let x = x + 1;
+    //          _in x + 1;          -> subst ("y", 5)
+    Expr *test3 = new _let(new Var("x"),
+                           new Add(new Var("x"), new Num(1)),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK(test3 -> subst("y", new Num(5)) -> equals(test3));
+}
 
 
 // PRINT TESTS
@@ -177,7 +307,32 @@ TEST_CASE("Variable Print"){
     CHECK((test1 -> to_string()) == "X");
 }
 
-
+TEST_CASE("_let Print"){
+    // test1 =
+    //        _let x = 5;
+    //        _in x + 1;
+    Expr *test1 = new _let(new Var("x"),
+                           new Num(5),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK((test1 -> to_string()) == "(_let x=5 _in (x+1))");
+    // test2 =
+    //        _let x = 5;
+    //        _in _let x = 3;
+    //            _in x + 1;
+    Expr *test2 = new _let(new Var("x"),
+                           new Num(5),
+                           new _let(new Var("x"),
+                                    new Num(3),
+                                    new Add(new Var("x"), new Num(1))));
+    CHECK((test2 -> to_string()) == "(_let x=5 _in (_let x=3 _in (x+1)))");
+    // test3 =
+    //        _let x = x + 1;
+    //        _in x + 1;
+    Expr *test3 = new _let(new Var("x"),
+                           new Add(new Var("x"), new Num(1)),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK((test3 -> to_string()) == "(_let x=(x+1) _in (x+1))");
+}
 
 // PRETTY_PRINT TESTS
 
@@ -221,4 +376,65 @@ TEST_CASE("Add and Mult Mixed Pretty Print"){
 TEST_CASE("Var Pretty Print"){
     Expr *test1 = new Var("Y");
     CHECK((test1 -> to_pretty_string()) == "Y");
+}
+
+TEST_CASE("_let Pretty Print"){
+    // test1 =
+    //        _let x = 5
+    //        _in x + 1
+    Expr *test1 = new _let(new Var("x"),
+                           new Num(5),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK((test1 -> to_pretty_string()) == "_let x = 5\n_in x + 1");
+    // test2 =
+    //        (_let x = 5
+    //        _in x) + 1
+    Expr *test2 = new Add(new _let(new Var("x"), new Num(5), new Var("x")),
+                          new Num(1));
+    CHECK((test2 -> to_pretty_string()) == "(_let x = 5\n _in x) + 1");
+    // test3 =
+    //        5 * (_let x = 5
+    //             _in  x) + 1
+    Expr *test3 = new Add (new Mult(new Num(5),
+                                    new _let(new Var("x"), new Num(5), new Var("x"))),
+                           new Num(1));
+    CHECK((test3 -> to_pretty_string()) == "5 * (_let x = 5\n     _in x) + 1");
+    // test4 =
+    //        5 * _let x = 5
+    //            _in  x + 1
+    Expr *test4 = new Mult(new Num(5),
+                           new _let(new Var("x"),
+                                    new Num(5),
+                                    new Add(new Var("x"), new Num(1))));
+    CHECK((test4 -> to_pretty_string()) == "5 * _let x = 5\n    _in x + 1");
+    // test5 =
+    //        _let x = 5
+    //        _in _let x = 3
+    //            _in x + 1
+    Expr *test5 = new _let(new Var("x"),
+                           new Num(5),
+                           new _let(new Var("x"), new Num(3),
+                                   new Add(new Var("x"), new Num(1))));
+    CHECK((test5 -> to_pretty_string()) == "_let x = 5\n_in _let x = 3\n    _in x + 1");
+    // test6 =
+    //        _let x = _let x = 3
+    //                 _in x + 1
+    //        _in x + 1
+    Expr *test6 = new _let(new Var("x"),
+                           new _let(new Var("x"), new Num(3),
+                                    new Add(new Var("x"), new Num(1))),
+                           new Add(new Var("x"), new Num(1)));
+    CHECK((test6 -> to_pretty_string()) == "_let x = _let x = 3\n         _in x + 1\n_in x + 1");
+    // test7 =
+    //       (5 + (_let x = _let x = 1
+    //                      _in x + 2
+    //             _in x + 3)) * 4
+    Expr *test7 = new Mult(new Add(new Num(5),
+                                   new _let(new Var("x"),
+                                            new _let(new Var("x"),
+                                                     new Num(1),
+                                                     new Add(new Var("x"), new Num(2))),
+                                            new Add(new Var("x"), new Num(3)))),
+                           new Num(4));
+    CHECK((test7 -> to_pretty_string()) == "(5 + (_let x = _let x = 1\n               _in x + 2\n      _in x + 3)) * 4");
 }
