@@ -1,5 +1,5 @@
-OBJS = main.o cmdline.o expr.o tests.o
-INCS = cmdline.hpp expr.hpp catch.hpp tests.hpp
+OBJS = main.o cmdline.o expr.o parse.o tests.o
+INCS = cmdline.hpp expr.hpp catch.hpp parse.hpp tests.hpp
 CXXFLAGS = --std=c++14 -O2
 
 msdscript: $(OBJS)
@@ -17,6 +17,9 @@ cmdline.o: cmdline.cpp $(INCS)
 
 expr.o: expr.cpp $(INCS)
 	$(CXX) $(CXXFLAGS) -c expr.cpp
+
+parse.o: parse.cpp $(INCS)
+	$(CXX) $(CXXFLAGS) -c parse.cpp
 
 tests.o: tests.cpp $(INCS)
 	$(CXX) $(CXXFLAGS) -c tests.cpp
