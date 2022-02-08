@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include "expr.hpp"
+#include "parse.hpp"
 #include "tests.hpp"
 
 // EQUAL TESTS
@@ -398,7 +399,8 @@ TEST_CASE("_let Pretty Print"){
     Expr *test3 = new Add (new Mult(new Num(5),
                                     new _let(new Var("x"), new Num(5), new Var("x"))),
                            new Num(1));
-    CHECK((test3 -> to_pretty_string()) == "5 * (_let x = 5\n     _in x) + 1");
+    CHECK((test3 -> to_pretty_string()) == "5 * (_let x = 5\n"
+                                           "     _in x) + 1");
     // test4 =
     //        5 * _let x = 5
     //            _in  x + 1
@@ -406,7 +408,8 @@ TEST_CASE("_let Pretty Print"){
                            new _let(new Var("x"),
                                     new Num(5),
                                     new Add(new Var("x"), new Num(1))));
-    CHECK((test4 -> to_pretty_string()) == "5 * _let x = 5\n    _in x + 1");
+    CHECK((test4 -> to_pretty_string()) == "5 * _let x = 5\n"
+                                           "    _in x + 1");
     // test5 =
     //        _let x = 5
     //        _in _let x = 3
@@ -415,7 +418,9 @@ TEST_CASE("_let Pretty Print"){
                            new Num(5),
                            new _let(new Var("x"), new Num(3),
                                    new Add(new Var("x"), new Num(1))));
-    CHECK((test5 -> to_pretty_string()) == "_let x = 5\n_in _let x = 3\n    _in x + 1");
+    CHECK((test5 -> to_pretty_string()) == "_let x = 5\n"
+                                           "_in _let x = 3\n"
+                                           "    _in x + 1");
     // test6 =
     //        _let x = _let x = 3
     //                 _in x + 1
@@ -424,7 +429,9 @@ TEST_CASE("_let Pretty Print"){
                            new _let(new Var("x"), new Num(3),
                                     new Add(new Var("x"), new Num(1))),
                            new Add(new Var("x"), new Num(1)));
-    CHECK((test6 -> to_pretty_string()) == "_let x = _let x = 3\n         _in x + 1\n_in x + 1");
+    CHECK((test6 -> to_pretty_string()) == "_let x = _let x = 3\n"
+                                           "         _in x + 1\n"
+                                           "_in x + 1");
     // test7 =
     //       (5 + (_let x = _let x = 1
     //                      _in x + 2
@@ -436,5 +443,71 @@ TEST_CASE("_let Pretty Print"){
                                                      new Add(new Var("x"), new Num(2))),
                                             new Add(new Var("x"), new Num(3)))),
                            new Num(4));
-    CHECK((test7 -> to_pretty_string()) == "(5 + (_let x = _let x = 1\n               _in x + 2\n      _in x + 3)) * 4");
+    CHECK((test7 -> to_pretty_string()) == "(5 + (_let x = _let x = 1\n"
+                                           "               _in x + 2\n"
+                                           "      _in x + 3)) * 4");
+}
+
+
+
+// PARSE TESTS
+
+TEST_CASE("Parse Num"){
+    CHECK(parse("3234") -> equals (new Num(3234)));
+    CHECK(parse(" 211") -> equals (new Num(211)));
+    CHECK(parse("-19 ") -> equals (new Num(-19)));
+    CHECK(parse("( -3    )") -> equals (new Num(-3)));
+    CHECK_THROWS_WITH(parse("(99"), "missing close paranthesis");
+}
+
+TEST_CASE("Parse Add"){
+    CHECK(parse("2 + 1") -> equals (new Add(new Num(2), new Num(1))));
+    CHECK(parse("-7 + 6") -> equals (new Add(new Num(-7), new Num(6))));
+    CHECK(parse("(3 + 2)") -> equals (new Add(new Num(3), new Num(2))));
+    CHECK(parse("   5+1") -> equals (new Add(new Num(5), new Num(1))));
+    CHECK_THROWS_WITH(parse("(9 +"), "invalid input");
+    CHECK_THROWS_WITH(parse("(9 +1"), "missing close paranthesis");
+    CHECK_THROWS_WITH(parse("9 +)"), "invalid input");
+}
+
+TEST_CASE("Parse Mult"){
+    CHECK(parse("6 * 12") -> equals (new Mult(new Num(6), new Num(12))));
+    CHECK(parse("-1*2") -> equals (new Mult(new Num(-1), new Num(2))));
+    CHECK(parse("(-8)*  4") -> equals (new Mult(new Num(-8), new Num(4))));
+    CHECK(parse("(2  * 1)") -> equals (new Mult(new Num(2), new Num(1))));
+    CHECK_THROWS_WITH(parse("(2  * 1"), "missing close paranthesis");
+    // NEED TO BE FIXED!!!
+    // CHECK_THROWS_WITH(parse("2  * 1)"), "invalid input");
+}
+
+TEST_CASE("Parse Var"){
+    CHECK(parse("cat") -> equals (new Var("cat")));
+    CHECK(parse("  dog") -> equals (new Var("dog")));
+    CHECK(parse("OWLS") -> equals (new Var("OWLS")));
+    // NEED TO BE FIXED!!!
+    // CHECK_THROWS_WITH(parse("mo.ngo"), "invalid input");
+}
+
+TEST_CASE("Parse _let"){
+    CHECK(parse("_let x = 5 _in x+2") -> equals
+          (new _let(new Var("x"), new Num(5),
+                    new Add(new Var("x"), new Num(2)))));
+    CHECK(parse("_let x = (x+2) _in      (x+-3)") -> equals
+          (new _let(new Var("x"), new Add(new Var("x"), new Num(2)),
+                    new Add(new Var("x"), new Num(-3)))));
+    CHECK_THROWS_WITH(parse("_let x = 1    _i"), "invalid input");
+}
+
+TEST_CASE("Mixed Parse"){
+    CHECK(parse("6 + (2 * -7)") -> equals(new Add(new Num(6),
+                                                  new Mult(new Num(2), new Num(-7)))));
+    CHECK(parse("(-3)  +  4 * (_let x = 2 _in x+1)") -> equals(
+          new Add(new Num(-3), new Mult(new Num(4),
+                                        new _let(new Var("x"), new Num(2),
+                                                 new Add(new Var("x"), new Num(1)))))));
+    CHECK(parse("(1234*((_letx=1_inx+-2)+7))") -> equals(
+          new Mult(new Num(1234),
+                   new Add(new _let(new Var("x"), new Num(1),
+                                    new Add(new Var("x"), new Num(-2))),
+                           new Num(7)))));
 }
