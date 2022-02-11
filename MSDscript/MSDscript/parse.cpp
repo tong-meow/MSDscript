@@ -7,20 +7,25 @@
 
 #include <iostream>
 #include <sstream>
+#include <stack>
 #include "parse.hpp"
+
 
 Expr *parse(std::string str){
     std::stringstream ss;
     ss << str;
-    Expr* e = parse_expr(ss);
+    std::stack<char> paren;
+    Expr* e = parse_expr(ss, paren, true);
     return e;
 }
+
 
 void consume(std::istream &in, int c){
     if (in.peek() == c){
         in.get();
     }
 }
+
 
 void skip_whitespace(std::istream &in){
     while (true){
@@ -60,23 +65,27 @@ Expr *parse_num(std::istream &in){
     return new Num(number);
 }
 
+
 Var *parse_var(std::istream &in){
     std::string variable;
-    
     while(true){
         int c = in.peek();
-        if (isalpha(c)){
+        if (isalpha(c) || c == '_'){
             consume(in, c);
             variable += c;
-        }else{
+        }else if( (c == ' ') || (c == '+') || (c == '=') || (c == ')')
+                 || (c == 10) || (c == -1)){
             break;
+        }else{
+            throw std::runtime_error("invalid input");
         }
     }
     
     return new Var(variable);
 }
 
-Expr *parse_let(std::istream &in){
+
+Expr *parse_let(std::istream &in, std::stack<char> &paren){
     // 〈multicand〉 =  _let 〈variable〉 = 〈expr〉 _in 〈expr〉
     Var* var;
     Expr* rhs;
@@ -97,7 +106,7 @@ Expr *parse_let(std::istream &in){
             consume(in, equal);
             skip_whitespace(in);
             
-            rhs = parse_expr(in);
+            rhs = parse_expr(in, paren, false);
             
             skip_whitespace(in);
             std::string keywordIn;
@@ -107,7 +116,7 @@ Expr *parse_let(std::istream &in){
             }
             if (keywordIn == "_in"){
                 skip_whitespace(in);
-                body = parse_expr(in);
+                body = parse_expr(in, paren, false);
             }else{
                 throw std::runtime_error("invalid input");
             }
@@ -121,40 +130,67 @@ Expr *parse_let(std::istream &in){
 }
 
 
+
 /*
  〈expr〉 = 〈addend〉
          | 〈addend〉 + 〈expr〉
  */
 
-
-Expr *parse_expr(std::istream &in){
+Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck){
     Expr *e;
-    e = parse_addend(in);
+    e = parse_addend(in, paren);
     skip_whitespace(in);
     int c = in.peek();
     if (c == '+') {
         consume(in, '+');
-        Expr *rhs = parse_expr(in);
-        return new Add(e, rhs);
+        Expr *rhs = parse_expr(in, paren, false);
+        if (firstCheck) {
+            skip_whitespace(in);
+            int c = in.peek();
+            if (c == ')'){
+                throw std::runtime_error("missing open parentheses");
+            }
+            if (c == 10 || c == -1){
+                return new Add(e, rhs);
+            }
+            else{
+                throw std::runtime_error("invalid input");
+            }
+        }
     }
-    else {
+    
+    if (!firstCheck) {
         return e;
+    }else{
+        skip_whitespace(in);
+        int c = in.peek();
+        if (c == ')'){
+            throw std::runtime_error("missing open parentheses");
+        }
+        if (c == 10 || c == -1){
+            return e;
+        }
+        else{
+            throw std::runtime_error("invalid input");
+        }
     }
 }
+
 
 
 /*
  〈addend〉 = 〈multicand〉
            | 〈multicand〉 * 〈addend〉
  */
-Expr *parse_addend(std::istream &in){
+
+Expr *parse_addend(std::istream &in, std::stack<char> &paren){
     Expr *e;
-    e = parse_multicand(in);
+    e = parse_multicand(in, paren);
     skip_whitespace(in);
     int c = in.peek();
     if (c == '*') {
         consume(in, '*');
-        Expr *rhs = parse_addend(in);
+        Expr *rhs = parse_addend(in, paren);
         return new Mult(e, rhs);
     }
     else {
@@ -169,32 +205,59 @@ Expr *parse_addend(std::istream &in){
               | 〈variable〉
               | _let 〈variable〉 = 〈expr〉 _in 〈expr〉
  */
-Expr *parse_multicand(std::istream &in){
+
+Expr *parse_multicand(std::istream &in, std::stack<char> &paren){
     skip_whitespace(in);
 
     int c = in.peek();
     // 〈multicand〉 = 〈number〉
     if ((c == '-') || isdigit(c)){
-        return parse_num(in);
+        Expr *num = parse_num(in);
+        skip_whitespace(in);
+        int check = in.peek();
+        if (check == ')' && (paren.empty())){
+            throw std::runtime_error("missing open parentheses");
+        }
+        return num;
     }
     // 〈multicand〉 =  ( 〈expr〉 )
     else if (c == '(') {
+        paren.push('(');
         consume(in, '(');
-        Expr *e = parse_expr(in);
+        Expr *e = parse_expr(in, paren, false);
         skip_whitespace(in);
         c = in.get();
         if (c != ')'){
-            throw std::runtime_error("missing close paranthesis");
+            throw std::runtime_error("missing close parentheses");
+        }else{
+            char previousInParen = paren.top();
+            if (previousInParen != '('){
+                throw std::runtime_error("missing open parentheses");
+            }else{
+                paren.pop();
+            }
         }
         return e;
     }
     // 〈multicand〉 = 〈variable〉
     else if (isalpha(c)){
-        return parse_var(in);
+        Var *var = parse_var(in);
+        skip_whitespace(in);
+        int check = in.peek();
+        if (check == ')' && (paren.empty())){
+            throw std::runtime_error("missing open parentheses");
+        }
+        return var;
     }
     // 〈multicand〉 =  _let 〈variable〉 = 〈expr〉 _in 〈expr〉
     else if (c == '_'){
-        return parse_let(in);
+        Expr *let = parse_let(in, paren);
+        skip_whitespace(in);
+        int check = in.peek();
+        if (check == ')' && (paren.empty())){
+            throw std::runtime_error("missing open parentheses");
+        }
+        return let;
     }
     //  Invalid input
     else{

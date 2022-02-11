@@ -457,7 +457,7 @@ TEST_CASE("Parse Num"){
     CHECK(parse(" 211") -> equals (new Num(211)));
     CHECK(parse("-19 ") -> equals (new Num(-19)));
     CHECK(parse("( -3    )") -> equals (new Num(-3)));
-    CHECK_THROWS_WITH(parse("(99"), "missing close paranthesis");
+    CHECK_THROWS_WITH(parse("(99"), "missing close parentheses");
 }
 
 TEST_CASE("Parse Add"){
@@ -466,7 +466,7 @@ TEST_CASE("Parse Add"){
     CHECK(parse("(3 + 2)") -> equals (new Add(new Num(3), new Num(2))));
     CHECK(parse("   5+1") -> equals (new Add(new Num(5), new Num(1))));
     CHECK_THROWS_WITH(parse("(9 +"), "invalid input");
-    CHECK_THROWS_WITH(parse("(9 +1"), "missing close paranthesis");
+    CHECK_THROWS_WITH(parse("(9 +1"), "missing close parentheses");
     CHECK_THROWS_WITH(parse("9 +)"), "invalid input");
 }
 
@@ -475,17 +475,18 @@ TEST_CASE("Parse Mult"){
     CHECK(parse("-1*2") -> equals (new Mult(new Num(-1), new Num(2))));
     CHECK(parse("(-8)*  4") -> equals (new Mult(new Num(-8), new Num(4))));
     CHECK(parse("(2  * 1)") -> equals (new Mult(new Num(2), new Num(1))));
-    CHECK_THROWS_WITH(parse("(2  * 1"), "missing close paranthesis");
-    // NEED TO BE FIXED!!!
-    // CHECK_THROWS_WITH(parse("2  * 1)"), "invalid input");
+    CHECK_THROWS_WITH(parse("(2  * 1"), "missing close parentheses");
+    CHECK_THROWS_WITH(parse("2  * 1)"), "missing open parentheses");
+    CHECK_THROWS_WITH(parse("(((((2  * 1)"), "missing close parentheses");
+    CHECK_THROWS_WITH(parse("(2  * 1))))))"), "missing open parentheses");
 }
 
 TEST_CASE("Parse Var"){
     CHECK(parse("cat") -> equals (new Var("cat")));
     CHECK(parse("  dog") -> equals (new Var("dog")));
     CHECK(parse("OWLS") -> equals (new Var("OWLS")));
-    // NEED TO BE FIXED!!!
-    // CHECK_THROWS_WITH(parse("mo.ngo"), "invalid input");
+    CHECK(parse("wild_animals") -> equals (new Var("wild_animals")));
+    CHECK_THROWS_WITH(parse("wha.le"), "invalid input");
 }
 
 TEST_CASE("Parse _let"){
