@@ -29,6 +29,7 @@ void use_arguments(int argc, char **argv){
         
         std::string command = argv[index];
         
+        // deal with help manu in terminal
         if ( command == "--help") {
             std::cout << "-------------------\n";
             std::cout << "HELP MESSAGE:\n";
@@ -40,6 +41,7 @@ void use_arguments(int argc, char **argv){
             std::cout << "-------------------\n";
             return;
         }
+        // deal with test in terminal
         else if ( command == "--test" ){
             if (!tested) {
                 int result = Catch::Session().run(1, argv);
@@ -55,6 +57,7 @@ void use_arguments(int argc, char **argv){
                 return;
             }
         }
+        // deal with interp in terminal
         else if (command == "--interp"){
             std::cout << "Please enter an expression:\n";
             try {
@@ -70,6 +73,7 @@ void use_arguments(int argc, char **argv){
             }
             return;
         }
+        // deal with print in terminal
         else if (command == "--print"){
             std::cout << "Please enter an expression:\n";
             try{
@@ -85,6 +89,7 @@ void use_arguments(int argc, char **argv){
             }
             return;
         }
+        // deal with pretty print in terminal
         else if (command == "--pretty-print"){
             std::cout << "Please enter an expression:\n";
             try{
