@@ -192,6 +192,8 @@ Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck){
             else{
                 throw std::runtime_error("invalid input");
             }
+        }else{
+            return new Add(e, rhs);
         }
     }
     // same as above, but this is the situation when there is no '+'.
