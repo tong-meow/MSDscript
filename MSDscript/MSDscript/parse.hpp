@@ -9,14 +9,20 @@
 #define parse_hpp
 
 #include <stdio.h>
+#include <stack>
 #include "expr.hpp"
 
 Expr *parse(std::string str);
+
 void consume(std::istream &in, int c);
 void skip_whitespace(std::istream &in);
+
 Expr *parse_num(std::istream &in);
-Expr *parse_expr(std::istream &in);
-Expr *parse_addend(std::istream &in);
-Expr *parse_multicand(std::istream &in);
+Var *parse_var(std::istream &in);
+Expr *parse_let(std::istream &in, std::stack<char> &paren);
+
+Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck);
+Expr *parse_addend(std::istream &in, std::stack<char> &paren);
+Expr *parse_multicand(std::istream &in, std::stack<char> &paren);
 
 #endif /* parse_hpp */
