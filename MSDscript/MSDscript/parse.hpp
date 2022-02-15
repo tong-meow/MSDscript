@@ -16,6 +16,7 @@ Expr *parse(std::string str);
 
 void consume(std::istream &in, int c);
 void skip_whitespace(std::istream &in);
+std::string getNChars(std::istream &in, int numOfChars);
 
 Expr *parse_num(std::istream &in);
 Var *parse_var(std::istream &in);

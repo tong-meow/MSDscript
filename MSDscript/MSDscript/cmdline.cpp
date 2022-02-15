@@ -59,7 +59,7 @@ void use_arguments(int argc, char **argv){
         }
         // deal with interp in terminal
         else if (command == "--interp"){
-            std::cout << "Please enter an expression:\n";
+//            std::cout << "Please enter an expression:\n";
             try {
                 // parse the std::cin
                 std::stack<char> paren;
@@ -67,41 +67,45 @@ void use_arguments(int argc, char **argv){
                 // interp the std::cin
                 int result = expr -> interp();
                 // print out result
-                std::cout << "Result after interpation: " << result << "\n";
+                std::cout << result << std::endl;
+//                std::cout << "Result after interpation: " << result << "\n";
             } catch (std::runtime_error& e){
                 std::cout << "Error: " << e.what() << std::endl;
+                exit(1);
             }
             return;
         }
         // deal with print in terminal
         else if (command == "--print"){
-            std::cout << "Please enter an expression:\n";
+//            std::cout << "Please enter an expression:\n";
             try{
                 // parse the std::cin
                 std::stack<char> paren;
                 Expr *expr = parse_expr(std::cin, paren, true);
                 // print the std::cin
-                std::cout << "Result: ";
+//                std::cout << "Result: ";
                 expr -> print(std::cout);
                 std::cout << "\n";
             } catch (std::runtime_error& e){
                 std::cout << "Error: " << e.what() << std::endl;
+                exit(1);
             }
             return;
         }
         // deal with pretty print in terminal
         else if (command == "--pretty-print"){
-            std::cout << "Please enter an expression:\n";
+//            std::cout << "Please enter an expression:\n";
             try{
                 // parse the std::cin
                 std::stack<char> paren;
                 Expr *expr = parse_expr(std::cin, paren, true);
                 // print the std::cin
-                std::cout << "Result:\n";
+//                std::cout << "Result:\n";
                 std::string result = expr -> to_pretty_string();
                 std::cout << result << "\n";
             } catch (std::runtime_error& e){
                 std::cout << "Error: " << e.what() << std::endl;
+                exit(1);
             }
             return;
         }

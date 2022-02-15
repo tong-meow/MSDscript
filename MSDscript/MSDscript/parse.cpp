@@ -39,6 +39,15 @@ void skip_whitespace(std::istream &in){
     }
 }
 
+std::string getNChars(std::istream &in, int numOfChars){
+    std::string result;
+    for (int i = 0; i < numOfChars; i++){
+        result += in.peek();
+        consume(in, in.peek());
+    }
+    return result;
+}
+
 
 /*//////////////////PARSE NUM / VAR / LET FACTORS//////////////////*/
 
@@ -100,54 +109,52 @@ Expr *parse_let(std::istream &in, std::stack<char> &paren){
     Expr* rhs;
     Expr* body;
     
-    // get the first 4 char
+    // CHECK "_let" : get the first 4 char
     std::string keywordLet;
-    for (int i = 0; i < 4; i++){
-        keywordLet += in.peek();
-        consume(in, in.peek());
-    }
+    keywordLet = getNChars(in, 4);
     
     // if first 4 chars == _let
     if (keywordLet == "_let"){
         skip_whitespace(in);
         // get the var
         var = parse_var(in);
-        // get the "="
-        skip_whitespace(in);
-        int equal = in.peek();
-        // if the next char is "="
-        if (equal == '='){
-            consume(in, equal);
-            skip_whitespace(in);
-            // get the rhs
-            rhs = parse_expr(in, paren, false);
-            // get the next 3 chars, they should be _in
-            skip_whitespace(in);
-            std::string keywordIn;
-            for (int i = 0; i < 3; i++){
-                keywordIn += in.peek();
-                consume(in, in.peek());
-            }
-            // if the next 3 chars are _in
-            if (keywordIn == "_in"){
-                skip_whitespace(in);
-                // get the body
-                body = parse_expr(in, paren, false);
-            }
-            // if the next 3 chars are not _in
-            else{
-                throw std::runtime_error("invalid input");
-            }
-        }
-        // if "=" is not found
-        else{
-            throw std::runtime_error("invalid input");
-        }
     }
     // if first 4 chars != _let
     else{
         throw std::runtime_error("invalid input");
     }
+    
+    // CHECK "= : get the "="
+    skip_whitespace(in);
+    int equal = in.peek();
+    // if the next char is "="
+    if (equal == '='){
+        consume(in, equal);
+        skip_whitespace(in);
+        // get the rhs
+        rhs = parse_expr(in, paren, false);
+    }
+    // if "=" is not found
+    else{
+        throw std::runtime_error("invalid input");
+    }
+    
+    
+    // CHECK "_in" : get the next 3 chars, they should be _in
+    skip_whitespace(in);
+    std::string keywordIn;
+    keywordIn = getNChars(in, 3);
+    // if the next 3 chars are _in
+    if (keywordIn == "_in"){
+        skip_whitespace(in);
+        // get the body
+        body = parse_expr(in, paren, false);
+    }
+    // if the next 3 chars are not _in
+    else{
+        throw std::runtime_error("invalid input");
+    }
+
     return new _let(var, rhs, body);
 }
 
