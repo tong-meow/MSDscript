@@ -17,9 +17,11 @@ class Expr;
 class Val {
 public:
     
-    virtual bool equals();
-    virtual Expr* to_expr();
-    virtual std::string to_string();
+    virtual bool equals(Val* v) = 0;
+    virtual Expr* to_expr() = 0;
+    virtual std::string to_string() = 0;
+    virtual Val* add_to(Val* v) = 0;
+    virtual Val* mult_to(Val* v) = 0;
     
 };
 
@@ -29,9 +31,13 @@ class NumVal : public Val {
 public:
     int val;
     
-    virtual bool equals();
+    NumVal(int val);
+    
+    virtual bool equals(Val *v);
     virtual Expr* to_expr();
     virtual std::string to_string();
+    virtual Val* add_to(Val* v);
+    virtual Val* mult_to(Val* v);
 };
 
 #endif /* val_hpp */

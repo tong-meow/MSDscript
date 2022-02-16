@@ -74,11 +74,11 @@ Expr *parse_num(std::istream &in){
         number = -number;
     }
 
-    return new Num(number);
+    return new NumExpr(number);
 }
 
 
-Var *parse_var(std::istream &in){
+VarExpr *parse_var(std::istream &in){
     std::string variable;
     while(true){
         int c = in.peek();
@@ -99,13 +99,13 @@ Var *parse_var(std::istream &in){
         }
     }
     
-    return new Var(variable);
+    return new VarExpr(variable);
 }
 
 
 Expr *parse_let(std::istream &in, std::stack<char> &paren){
     // 〈multicand〉 =  _let 〈variable〉 = 〈expr〉 _in 〈expr〉
-    Var* var;
+    VarExpr* var;
     Expr* rhs;
     Expr* body;
     
@@ -155,7 +155,7 @@ Expr *parse_let(std::istream &in, std::stack<char> &paren){
         throw std::runtime_error("invalid input");
     }
 
-    return new _let(var, rhs, body);
+    return new LetExpr(var, rhs, body);
 }
 
 
@@ -195,13 +195,13 @@ Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck){
                 throw std::runtime_error("missing open parentheses");
             }
             if (c == 10 || c == -1){
-                return new Add(e, rhs);
+                return new AddExpr(e, rhs);
             }
             else{
                 throw std::runtime_error("invalid input");
             }
         }else{
-            return new Add(e, rhs);
+            return new AddExpr(e, rhs);
         }
     }
     // same as above, but this is the situation when there is no '+'.
@@ -243,7 +243,7 @@ Expr *parse_addend(std::istream &in, std::stack<char> &paren){
     if (c == '*') {
         consume(in, '*');
         Expr *rhs = parse_addend(in, paren);
-        return new Mult(e, rhs);
+        return new MultExpr(e, rhs);
     }
     else {
         return e;
@@ -295,7 +295,7 @@ Expr *parse_multicand(std::istream &in, std::stack<char> &paren){
     
     //  case 3: <multicand> = <variable>
     else if (isalpha(c)){
-        Var *var = parse_var(in);
+        VarExpr *var = parse_var(in);
         skip_whitespace(in);
         int check = in.peek();
         if (check == ')' && (paren.empty())){

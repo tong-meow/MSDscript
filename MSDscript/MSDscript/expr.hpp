@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string>
 
+class Val;
 
 typedef enum {
     prec_none,      // = 0
@@ -26,7 +27,7 @@ public:
     // equals determines whether 2 Expr is equal or not
     virtual bool equals(Expr *e) = 0;
     // interp returns a integer value of an Expr
-    virtual int interp() = 0;
+    virtual Val* interp() = 0;
     // has_variable determines if an Expr contains a string
     virtual bool has_variable() = 0;
     // substr is used to check if an Expr contains a target string s,
@@ -50,13 +51,13 @@ public:
 
 
 // subclass 1: Num
-class Num : public Expr {
+class NumExpr : public Expr {
 public:
     int val;
     
-    Num(int val);
+    NumExpr(int val);
     virtual bool equals(Expr *e);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
@@ -67,14 +68,14 @@ public:
 
 
 // subclass 2: Add
-class Add : public Expr{
+class AddExpr : public Expr{
 public:
     Expr* lhs;
     Expr* rhs;
     
-    Add(Expr* lhs, Expr* rhs);
+    AddExpr(Expr* lhs, Expr* rhs);
     virtual bool equals(Expr *e);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
@@ -85,14 +86,14 @@ public:
 
 
 // subclass 3: Mult
-class Mult : public Expr{
+class MultExpr : public Expr{
 public:
     Expr* lhs;
     Expr* rhs;
     
-    Mult(Expr* lhs, Expr* rhs);
+    MultExpr(Expr* lhs, Expr* rhs);
     virtual bool equals(Expr *e);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
@@ -103,13 +104,13 @@ public:
 
 
 // subclass 4: Var
-class Var : public Expr{
+class VarExpr : public Expr{
 public:
     std::string str;
     
-    Var(std::string str);
+    VarExpr(std::string str);
     virtual bool equals(Expr *e);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
@@ -121,15 +122,15 @@ public:
 
 // subclass 5: _let
 // 〈expr〉 = _let 〈variable〉 = 〈expr〉 _in 〈expr〉
-class _let : public Expr{
+class LetExpr : public Expr{
 public:
-    Var* varName;
+    VarExpr* varName;
     Expr* rhs;
     Expr* body;
     
-    _let(Var* varName, Expr* rhs, Expr* body);
+    LetExpr(VarExpr* varName, Expr* rhs, Expr* body);
     virtual bool equals(Expr* e);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
