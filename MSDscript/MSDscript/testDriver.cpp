@@ -37,7 +37,7 @@ void exeRandomTest(char **argv, std::string typeOfExec, std::string testStr){
     // get the 2nd parameter
     std::string secondArg = "--" + typeOfExec;
     const char *const secondPtr = secondArg.c_str();
-    const char *const exec_argv[] = { firstPtr, secondPtr};
+    const char *const exec_argv[] = { firstPtr, secondPtr };
     
     try {
         // execute the ./msdscript
@@ -51,7 +51,7 @@ void exeRandomTest(char **argv, std::string typeOfExec, std::string testStr){
         }
         
         // if the execution succeeded, print result message
-        std::cout << ">>>> " << typeOfExec << "() result: " << execResult.out;
+        std::cout << ">>>> " << typeOfExec << "() result:\n" << execResult.out;
         
     }
     // deal with the runtime_error in exec_program()

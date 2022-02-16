@@ -284,18 +284,18 @@ bool _let::equals(Expr* e){
 
 int _let::interp(){
     // if the rhs has var, directly accumulate
-    if (rhs->has_variable()){
-        return ((this->body)
-                -> subst (((this->varName)->to_string()), (this->rhs)))
-                -> interp();
-    }
+//    if (rhs->has_variable()){
+//        return ((this->body)
+//                -> subst (((this->varName)->to_string()), (this->rhs)))
+//                -> interp();
+//    }
     // if the rhs doesn't have var, interp the rhs first
-    else{
+//    else{
         Expr *newRhs = new Num(rhs -> interp());
         return ((this->body)
                 -> subst ((this->varName)->to_string(), newRhs))
                 -> interp();
-    }
+//    }
 }
 
 bool _let::has_variable(){

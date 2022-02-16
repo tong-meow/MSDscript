@@ -88,8 +88,8 @@ Var *parse_var(std::istream &in){
             variable += c;
         }
         // if the next character is these below, return the var
-        else if( (c == ' ') || (c == '+') || (c == '=') || (c == ')')
-                 || (c == 10) || (c == -1)){
+        else if( (c == ' ') || (c == '+') || (c == '=') || (c == ')') ||
+                 (c == '*') || (c == 10) || (c == -1)){
             break;
         }
         // if the next character is other chars, e.g: class.., myCat-,
@@ -168,6 +168,7 @@ Expr *parse_let(std::istream &in, std::stack<char> &paren){
  */
 
 Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck){
+    skip_whitespace(in);
     // parse the first <addend>
     Expr *e;
     e = parse_addend(in, paren);
@@ -230,6 +231,7 @@ Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck){
  */
 
 Expr *parse_addend(std::istream &in, std::stack<char> &paren){
+    skip_whitespace(in);
     // parse the first <multicand>
     Expr *e;
     e = parse_multicand(in, paren);
