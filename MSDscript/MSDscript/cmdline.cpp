@@ -13,6 +13,7 @@
 #include "catch.hpp"
 #include "parse.hpp"
 #include "expr.hpp"
+#include "val.hpp"
 
 void use_arguments(int argc, char **argv){
     // if argc == "./msdscript"
@@ -65,7 +66,7 @@ void use_arguments(int argc, char **argv){
                 std::stack<char> paren;
                 Expr *expr = parse_expr(std::cin, paren, true);
                 // interp the std::cin
-                int result = expr -> interp();
+                std::string result = (expr -> interp()) -> to_string();
                 // print out result
                 std::cout << result << std::endl;
 //                std::cout << "Result after interpation: " << result << "\n";

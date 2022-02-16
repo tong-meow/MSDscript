@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include "expr.hpp"
+#include "val.hpp"
 
 
 /*//////////////////NON-VIRTUAL FUNCTIONS//////////////////*/
@@ -38,71 +39,72 @@ std::string Expr::to_pretty_string(){
 
 /*//////////////////SUBCLASSES//////////////////*/
 
-// subclass 1: Num
+// subclass 1: NumExpr
 
-Num::Num(int val){
+NumExpr::NumExpr(int val){
     this -> val = val;
 }
 
-bool Num::equals(Expr *e){
-    Num *target = dynamic_cast<Num*>(e);
+bool NumExpr::equals(Expr *e){
+    NumExpr *target = dynamic_cast<NumExpr*>(e);
     if (target == NULL) return false;
     return ((this -> val) == (target -> val));
 }
 
-int Num::interp(){
-    return this -> val;
+Val* NumExpr::interp(){
+    return new NumVal(this -> val);
 }
 
-bool Num::has_variable(){
+bool NumExpr::has_variable(){
     return false;
 }
 
-Expr* Num::subst(std::string, Expr *e){
+Expr* NumExpr::subst(std::string, Expr *e){
     return this;
 }
 
-void Num::print(std::ostream& os){
+void NumExpr::print(std::ostream& os){
     os << (this -> val);
 }
 
-//void Num::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
+//void NumExpr::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
 //    os << (this -> val);
 //}
-void Num::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+void NumExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                           bool nestedLet, int spaces){
     os << (this -> val);
 };
 
 
 
-// subclass 2: Add
+// subclass 2: AddExpr
 
-Add::Add(Expr* lhs, Expr* rhs){
+AddExpr::AddExpr(Expr* lhs, Expr* rhs){
     this -> lhs = lhs;
     this -> rhs = rhs;
 }
 
-bool Add::equals(Expr *e){
-    Add *target = dynamic_cast<Add*>(e);
+bool AddExpr::equals(Expr *e){
+    AddExpr *target = dynamic_cast<AddExpr*>(e);
     if (target == NULL) return false;
     return (((this->lhs) -> equals (target->lhs))
             && ((this->rhs) -> equals (target->rhs)));
 }
 
-int Add::interp(){
-    return (this -> lhs) -> interp() + (this -> rhs) -> interp();
+Val* AddExpr::interp(){
+    return ((this -> lhs) -> interp())->
+            add_to( (this -> rhs) -> interp() );
 }
 
-bool Add::has_variable(){
+bool AddExpr::has_variable(){
     return (lhs -> has_variable() || rhs -> has_variable());
 }
 
-Expr* Add::subst(std::string s, Expr *e){
-    return (new Add((this-> lhs) -> subst(s, e), (this-> rhs) -> subst(s, e)));
+Expr* AddExpr::subst(std::string s, Expr *e){
+    return (new AddExpr((this-> lhs) -> subst(s, e), (this-> rhs) -> subst(s, e)));
 }
 
-void Add::print(std::ostream& os){
+void AddExpr::print(std::ostream& os){
     os << '(';
     (this->lhs) -> print(os);
     os << '+';
@@ -110,8 +112,8 @@ void Add::print(std::ostream& os){
     os << ')';
 }
 
-//void Add::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
-//    // there are 2 occasions that Add doesn't need ()
+//void AddExpr::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
+//    // there are 2 occasions that AddExpr doesn't need ()
 //    // 1. it is at the top level
 //    // 2. it is inside a '+' but at the right side. e.g. 1 + 2 + 3, the '2 + 3' needs no ()
 //    if ((!insideAdd && !insideMult) || (insideAdd && !lhs)){
@@ -126,7 +128,7 @@ void Add::print(std::ostream& os){
 //        os << ')';
 //    }
 //}
-void Add::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+void AddExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                           bool nestedLet, int spaces){
     long start = os.tellp();
     if (prec < 2 || (prec==2 && !lhs)){
@@ -149,33 +151,34 @@ void Add::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 }
 
 
-// subclass 3: Mult
+// subclass 3: MultExpr
 
-Mult::Mult(Expr* lhs, Expr* rhs){
+MultExpr::MultExpr(Expr* lhs, Expr* rhs){
     this -> lhs = lhs;
     this -> rhs = rhs;
 }
 
-bool Mult::equals(Expr *e){
-    Mult *target = dynamic_cast<Mult*>(e);
+bool MultExpr::equals(Expr *e){
+    MultExpr *target = dynamic_cast<MultExpr*>(e);
     if (target == NULL) return false;
     return (((this->lhs) -> equals (target->lhs))
             && ((this->rhs) -> equals (target->rhs)));
 }
 
-int Mult::interp(){
-    return (this -> lhs) -> interp() * (this -> rhs) -> interp();
+Val* MultExpr::interp(){
+    return ((this -> lhs) -> interp()) ->
+            mult_to ((this -> rhs) -> interp());
 }
 
-bool Mult::has_variable(){
+bool MultExpr::has_variable(){
     return (lhs -> has_variable() || rhs -> has_variable());
 }
 
-Expr* Mult::subst(std::string s, Expr *e){
-    return (new Mult((this-> lhs) -> subst(s, e), (this-> rhs) -> subst(s, e)));
+Expr* MultExpr::subst(std::string s, Expr *e){
+    return (new MultExpr((this-> lhs) -> subst(s, e), (this-> rhs) -> subst(s, e)));
 }
 
-void Mult::print(std::ostream& os){
+void MultExpr::print(std::ostream& os){
     os << '(';
     (this->lhs) -> print(os);
     os << '*';
@@ -183,9 +186,9 @@ void Mult::print(std::ostream& os){
     os << ')';
 }
 
-//void Mult::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
-//    // there is only 1 occasion that Mult needs ()
-//    // 1. it is inside a mult and is at the left side
+//void MultExpr::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
+//    // there is only 1 occasion that MultExpr needs ()
+//    // 1. it is inside a MultExpr and is at the left side
 //    //    e.g. (3 * 2) * 1, the (3 * 2) needs ()
 //    if (insideMult && lhs){
 //        os << '(';
@@ -199,7 +202,7 @@ void Mult::print(std::ostream& os){
 //        (this -> rhs) -> pretty_print_at(os, false, true, false);
 //    }
 //}
-void Mult::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+void MultExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                            bool nestedLet, int spaces){
     long start = os.tellp();
     if (prec >= 3 && lhs){
@@ -222,28 +225,28 @@ void Mult::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 }
 
 
-// subclass 4: Variable
+// subclass 4: VarExpr
 
-Var::Var(std::string str){
+VarExpr::VarExpr(std::string str){
     this -> str = str;
 }
 
-bool Var::equals(Expr *e){
-    Var *target = dynamic_cast<Var*>(e);
+bool VarExpr::equals(Expr *e){
+    VarExpr *target = dynamic_cast<VarExpr*>(e);
     if (target == NULL) return false;
     return ((this->str) == (target->str));
 }
 
-int Var::interp(){
+Val* VarExpr::interp(){
     // throw exception since there is no integer value for a string
     throw std::runtime_error("Error: Expr contains a string element.");
 }
 
-bool Var::has_variable(){
+bool VarExpr::has_variable(){
     return true;
 }
 
-Expr* Var::subst(std::string s, Expr *e){
+Expr* VarExpr::subst(std::string s, Expr *e){
     if ((this -> str) == s){
         return e;
     }else{
@@ -251,14 +254,14 @@ Expr* Var::subst(std::string s, Expr *e){
     }
 }
 
-void Var::print(std::ostream& os){
+void VarExpr::print(std::ostream& os){
     os << (this->str);
 }
 
-//void Var::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
+//void VarExpr::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
 //    os << (this->str);
 //}
-void Var::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+void VarExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                           bool nestedLet, int spaces){
     os << (this->str);
 };
@@ -266,15 +269,15 @@ void Var::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 
 
 
-// subclass 5: _let
-_let::_let(Var* varName, Expr* rhs, Expr* body){
+// subclass 5: LetExpr
+LetExpr::LetExpr(VarExpr* varName, Expr* rhs, Expr* body){
     this -> varName = varName;
     this -> rhs = rhs;
     this -> body = body;
 }
 
-bool _let::equals(Expr* e){
-    _let *target = dynamic_cast<_let*>(e);
+bool LetExpr::equals(Expr* e){
+    LetExpr *target = dynamic_cast<LetExpr*>(e);
     if (target == NULL) return false;
     return ( (this->varName) -> equals (target->varName)
             && (this->rhs) -> equals (target->rhs)
@@ -282,43 +285,43 @@ bool _let::equals(Expr* e){
             );
 }
 
-int _let::interp(){
-    // if the rhs has var, directly accumulate
+Val* LetExpr::interp(){
+    // if the rhs has VarExpr, directly accumulate
 //    if (rhs->has_variable()){
 //        return ((this->body)
 //                -> subst (((this->varName)->to_string()), (this->rhs)))
 //                -> interp();
 //    }
-    // if the rhs doesn't have var, interp the rhs first
+    // if the rhs doesn't have VarExpr, interp the rhs first
 //    else{
-        Expr *newRhs = new Num(rhs -> interp());
-        return ((this->body)
-                -> subst ((this->varName)->to_string(), newRhs))
-                -> interp();
+    Val* rhs_val = this -> rhs -> interp();
+    return ((this->body)
+            -> subst ((this->varName)->to_string(), rhs_val -> to_expr()))
+            -> interp();
 //    }
 }
 
-bool _let::has_variable(){
+bool LetExpr::has_variable(){
     return ((this->rhs)->has_variable() || (this->body)->has_variable());
 }
 
-Expr* _let::subst(std::string s, Expr *e){
+Expr* LetExpr::subst(std::string s, Expr *e){
     // compare string s with varName of the _let
     // if the names are same, use the nearest one
     if (s == (this->varName)->to_string()){
-        return new _let(this->varName,
+        return new LetExpr(this->varName,
                         this->rhs->subst(s,e),
                         this->body);
     }
     // if not, accumulate it
     else{
-        return new _let(this->varName,
+        return new LetExpr(this->varName,
                         this->rhs->subst(s, e),
                         this->body->subst(s, e));
     }
 }
 
-void _let::print(std::ostream& os){
+void LetExpr::print(std::ostream& os){
     os << "(_let ";
     this->varName->print(os);
     os << "=";
@@ -328,13 +331,13 @@ void _let::print(std::ostream& os){
     os << ")";
 }
 
-void _let::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+void LetExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                            bool nestedLet, int spaces){
     long start = os.tellp();
     // 2 conditions require parentheses:
-    //  - when the _let is the lhs of Mult or Add (prec > 1 && lhs == true)
-    //  - when the _let is the rhs of Mult or Add, but is nested as the lhs of
-    //    an outer Mult or Add (then the bool nestedLet would be true)
+    //  - when the LetExpr is the lhs of MultExpr or AddExpr (prec > 1 && lhs == true)
+    //  - when the LetExpr is the rhs of MultExpr or AddExpr, but is nested as the lhs of
+    //    an outer MultExpr or AddExpr (then the bool nestedLet would be true)
     if ((prec > 1 && lhs) || nestedLet){
         os << "(_let ";
         this->varName->pretty_print_at(os, prec_let, false, false, spaces+1);
