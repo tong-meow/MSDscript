@@ -21,7 +21,7 @@ public:
     virtual Expr* to_expr() = 0;
     virtual std::string to_string() = 0;
     virtual Val* add_to(Val* v) = 0;
-    virtual Val* mult_to(Val* v) = 0;
+    virtual Val* mult_by(Val* v) = 0;
     
 };
 
@@ -37,7 +37,7 @@ public:
     virtual Expr* to_expr();
     virtual std::string to_string();
     virtual Val* add_to(Val* v);
-    virtual Val* mult_to(Val* v);
+    virtual Val* mult_by(Val* v);
 };
 
 #endif /* val_hpp */

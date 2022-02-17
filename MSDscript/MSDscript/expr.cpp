@@ -167,7 +167,7 @@ bool MultExpr::equals(Expr *e){
 
 Val* MultExpr::interp(){
     return ((this -> lhs) -> interp()) ->
-            mult_to ((this -> rhs) -> interp());
+            mult_by ((this -> rhs) -> interp());
 }
 
 bool MultExpr::has_variable(){
