@@ -547,6 +547,7 @@ TEST_CASE("Val Tests"){
         Val *test2 = new NumVal(5);
         CHECK(((test1 -> add_to(test2)) -> equals (new NumVal(0))) == true);
         CHECK(((test1 -> add_to(test2)) -> equals (new NumVal(5))) == false);
+        CHECK_THROWS_WITH(((test1 -> add_to(nullptr))), "Error: rhs of Val add_to() must be a NumVal.");
     }
     
     SECTION("Val mult_to()"){
@@ -554,5 +555,6 @@ TEST_CASE("Val Tests"){
         Val *test2 = new NumVal(5);
         CHECK(((test1 -> mult_by(test2)) -> equals (new NumVal(-25))) == true);
         CHECK(((test1 -> mult_by(test2)) -> equals (new NumVal(25))) == false);
+        CHECK_THROWS_WITH(((test1 -> mult_by(nullptr))), "Error: rhs of Val mult_by() must be a NumVal.");
     }
 }

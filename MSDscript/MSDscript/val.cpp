@@ -34,7 +34,7 @@ std::string NumVal::to_string(){
 
 Val* NumVal::add_to(Val* v){
     NumVal *target = dynamic_cast<NumVal*>(v);
-    if (target == NULL) {
+    if (target == nullptr) {
         throw std::runtime_error("Error: rhs of Val add_to() must be a NumVal.");
     }
     return new NumVal((this -> val) + (target -> val));
@@ -42,8 +42,8 @@ Val* NumVal::add_to(Val* v){
 
 Val* NumVal::mult_by(Val* v){
     NumVal *target = dynamic_cast<NumVal*>(v);
-    if (target == NULL) {
-        throw std::runtime_error("Error: rhs of Val mult_to() must be a NumVal.");
+    if (target == nullptr) {
+        throw std::runtime_error("Error: rhs of Val mult_by() must be a NumVal.");
     }
     return new NumVal((this -> val) * (target -> val));
 }
