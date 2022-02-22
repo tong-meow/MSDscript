@@ -40,4 +40,18 @@ public:
     virtual Val* mult_by(Val* v);
 };
 
+// subclass 2: trueVal
+class BoolVal : public Val {
+public:
+    bool val;
+    
+    BoolVal(bool val);
+    
+    virtual bool equals(Val *v);
+    virtual Expr* to_expr();
+    virtual std::string to_string();
+    virtual Val* add_to(Val* v);
+    virtual Val* mult_by(Val* v);
+};
+
 #endif /* val_hpp */
