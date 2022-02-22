@@ -16,8 +16,9 @@ class Val;
 typedef enum {
     prec_none,      // = 0
     prec_let,       // = 1
-    prec_add,       // = 2
-    prec_mult       // = 3
+    prec_equal,        // = 2
+    prec_add,       // = 3
+    prec_mult       // = 4
 } precedence_t;
 
 
@@ -135,6 +136,57 @@ public:
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
 //    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
+};
+
+
+// subclass 6: BoolExpr
+class BoolExpr : public Expr{
+public:
+    bool val;
+    
+    BoolExpr(bool val);
+    virtual bool equals(Expr* e);
+    virtual Val* interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *e);
+    virtual void print(std::ostream& os);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
+};
+
+
+// subclass 7: EqualExpr
+class EqualExpr : public Expr{
+public:
+    Expr* left;
+    Expr* right;
+    
+    EqualExpr(Expr* left, Expr* right);
+    virtual bool equals(Expr* e);
+    virtual Val* interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *e);
+    virtual void print(std::ostream& os);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
+};
+
+
+// subclass 8: IfExpr
+class IfExpr : public Expr{
+public:
+    Expr* condition;
+    Expr* result1;
+    Expr* result2;
+    
+    IfExpr(Expr* condition, Expr* result1, Expr* result2);
+    virtual bool equals(Expr* e);
+    virtual Val* interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *e);
+    virtual void print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                                  bool nestedLet, int spaces);
 };

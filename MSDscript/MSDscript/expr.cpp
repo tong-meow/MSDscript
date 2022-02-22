@@ -131,7 +131,7 @@ void AddExpr::print(std::ostream& os){
 void AddExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                           bool nestedLet, int spaces){
     long start = os.tellp();
-    if (prec < 2 || (prec==2 && !lhs)){
+    if (prec < 3 || (prec==3 && !lhs)){
         (this -> lhs) -> pretty_print_at(os, prec_add, true, true, spaces);
         os << " + ";
         long end1 = os.tellp();
@@ -205,7 +205,7 @@ void MultExpr::print(std::ostream& os){
 void MultExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                            bool nestedLet, int spaces){
     long start = os.tellp();
-    if (prec >= 3 && lhs){
+    if (prec >= 4 && lhs){
         os << '(';
         long end1 = os.tellp();
         (this -> lhs) -> pretty_print_at(os, prec_mult, true, true,
@@ -369,4 +369,164 @@ void LetExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
         // spaces + 4: the '4' stands for the '_in '
         this->body->pretty_print_at(os, prec_let, false, false, spaces+4);
     }
+}
+
+
+
+// subclass 6: BoolExpr
+BoolExpr::BoolExpr(bool val){
+    this -> val = val;
+}
+
+bool BoolExpr::equals(Expr *e){
+    BoolExpr *target = dynamic_cast<BoolExpr*>(e);
+    if (target == NULL) return false;
+    return (this -> val) == (target -> val);
+}
+
+Val* BoolExpr::interp(){
+    throw std::runtime_error("Error: Expr contains a boolean element.");
+}
+
+bool BoolExpr::has_variable(){
+    return false;
+}
+
+Expr* BoolExpr::subst(std::string s, Expr *e){
+    return this;
+}
+
+void BoolExpr::print(std::ostream& os){
+    if (this -> val){
+        os << "_true";
+    }else{
+        os << "_false";
+    }
+}
+
+void BoolExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                               bool nestedLet, int spaces){
+    if (this -> val){
+        os << "_true";
+    }else{
+        os << "_false";
+    }
+}
+
+
+// subclass 7: EqualExpr
+EqualExpr::EqualExpr(Expr* left, Expr* right){
+    this -> left = left;
+    this -> right = right;
+}
+
+bool EqualExpr::equals(Expr* e){
+    EqualExpr *target = dynamic_cast<EqualExpr*>(e);
+    if (target == NULL) return false;
+    return ((this -> left) -> equals(target -> left)) &&
+           ((this -> right) -> equals(target -> right));
+}
+
+Val* EqualExpr::interp(){
+    if ((this -> left -> interp()) -> equals (this -> right -> interp()))
+        return new BoolVal(true);
+    else
+        return new BoolVal(false);
+}
+
+bool EqualExpr::has_variable(){
+    return ((this -> left) -> has_variable()) || ((this -> right) -> has_variable());
+}
+
+Expr* EqualExpr::subst(std::string s, Expr *e){
+    return new EqualExpr(((this -> left) -> subst(s, e)), ((this -> right) -> subst(s, e)));
+}
+
+void EqualExpr::print(std::ostream& os){
+    os << "(";
+    (this -> left) -> print(os);
+    os << " == ";
+    (this -> right) -> print(os);
+    os << ")";
+}
+
+void EqualExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                bool nestedLet, int spaces){
+    long start = os.tellp();
+    if (prec >= 2 && lhs){
+        os << '(';
+        long end1 = os.tellp();
+        (this -> left) -> pretty_print_at(os, prec_equal, true, nestedLet, spaces+(int)(end1-start));
+        os << " == ";
+        long end2 = os.tellp();
+        (this -> right) -> pretty_print_at(os, prec_equal, true, nestedLet, spaces+(int)(end2-start));
+        os << ')';
+    }else{
+        (this -> left) -> pretty_print_at(os, prec_equal, true, nestedLet, spaces);
+        os << " == ";
+        long end3 = os.tellp();
+        (this -> right) -> pretty_print_at(os, prec_equal, true, nestedLet, spaces+(int)(end3-start));
+    }
+}
+
+
+// subclass 8: IfExpr
+IfExpr::IfExpr(Expr* condition, Expr* result1, Expr* result2){
+    this -> condition = condition;
+    this -> result1 = result1;
+    this -> result2 = result2;
+}
+
+bool IfExpr::equals(Expr* e){
+    IfExpr *target = dynamic_cast<IfExpr*>(e);
+    if (target == NULL) return false;
+    return ((this -> condition) -> equals(target -> condition) &&
+            (this -> result1) -> equals(target -> result1) &&
+            (this -> result2) -> equals(target -> result2));
+}
+
+Val* IfExpr::interp(){
+    Val* cdt = this -> condition -> interp();
+    BoolVal *condition = dynamic_cast<BoolVal*>(cdt);
+    if (condition == NULL){
+        throw std::runtime_error("Error: IfExpr's condition is not a boolean value.");
+    }
+    else if ( (condition -> val) == true ) {
+        return result1 -> interp();
+    }
+    else{
+        return result2 -> interp();
+    }
+}
+
+bool IfExpr::has_variable(){
+    return ((this -> condition) -> has_variable() ||
+            (this -> result1) -> has_variable() ||
+            (this -> result2) -> has_variable());
+}
+
+Expr* IfExpr::subst(std::string s, Expr *e){
+    return new IfExpr(((this -> condition) -> subst(s, e)),
+                      ((this -> result1) -> subst(s, e)),
+                      ((this -> result2) -> subst(s, e)));
+}
+
+void IfExpr::print(std::ostream& os){
+    os << "(_if (";
+    this -> condition -> print(os);
+    os << ") _then (";
+    this -> result1 -> print(os);
+    os << ") _else (";
+    this -> result2 -> print(os);
+    os << "))";
+}
+
+void IfExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                     bool nestedLet, int spaces){
+    os << "_if ";
+    this -> condition -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
+    os << "\n_then ";
+    this -> result1 -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
+    os << "\n_else ";
+    this -> result2 -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
 }
