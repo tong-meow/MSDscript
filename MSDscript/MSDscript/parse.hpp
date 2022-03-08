@@ -21,9 +21,12 @@ std::string getNChars(std::istream &in, int numOfChars);
 Expr *parse_num(std::istream &in);
 VarExpr *parse_var(std::istream &in);
 Expr *parse_let(std::istream &in, std::stack<char> &paren);
+Expr *parse_if(std::istream &in, std::stack<char> &paren);
 
 Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck);
 Expr *parse_addend(std::istream &in, std::stack<char> &paren);
 Expr *parse_multicand(std::istream &in, std::stack<char> &paren);
+
+Expr *parseUs(std::istream &in, std::stack<char> &paren);
 
 #endif /* parse_hpp */

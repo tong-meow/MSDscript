@@ -109,17 +109,17 @@ Expr *parse_let(std::istream &in, std::stack<char> &paren){
     Expr* rhs;
     Expr* body;
     
-    // CHECK "_let" : get the first 4 char
+    // CHECK "_let" : get the first 3 char
     std::string keywordLet;
-    keywordLet = getNChars(in, 4);
+    keywordLet = getNChars(in, 3);
     
-    // if first 4 chars == _let
-    if (keywordLet == "_let"){
+    // if first 3 chars == _let
+    if (keywordLet == "let"){
         skip_whitespace(in);
         // get the var
         var = parse_var(in);
     }
-    // if first 4 chars != _let
+    // if first 3 chars != _let
     else{
         throw std::runtime_error("invalid input");
     }
@@ -156,6 +156,57 @@ Expr *parse_let(std::istream &in, std::stack<char> &paren){
     }
 
     return new LetExpr(var, rhs, body);
+}
+
+
+Expr *parse_if(std::istream &in, std::stack<char> &paren){
+    // <multicand> = _if <expr> _then <expr> _else <expr>
+    Expr *condition;
+    Expr *thenExpr;
+    Expr *elseExpr;
+    
+    // CHECK "_if" : get the first 3 char
+    std::string keywordIf;
+    keywordIf = getNChars(in, 2);
+    
+    // if first 3 chars == _if
+    if (keywordIf == "if"){
+        skip_whitespace(in);
+        // get the expr
+        condition = parse_expr(in, paren, false);
+    }
+    // if first 3 chars != _if
+    else{
+        throw std::runtime_error("invalid input");
+    }
+    
+    // CHECK "_then"
+    std::string keywordThen;
+    keywordThen = getNChars(in, 5);
+    
+    if (keywordThen == "_then"){
+        skip_whitespace(in);
+        // get the expr
+        thenExpr = parse_expr(in, paren, false);
+    }
+    else{
+        throw std::runtime_error("invalid input");
+    }
+    
+    // CHECK "_else"
+    std::string keywordElse;
+    keywordElse = getNChars(in, 5);
+    
+    if (keywordElse == "_else"){
+        skip_whitespace(in);
+        // get the expr
+        elseExpr = parse_expr(in, paren, false);
+    }
+    else{
+        throw std::runtime_error("invalid input");
+    }
+    
+    return new IfExpr(condition, thenExpr, elseExpr);
 }
 
 
@@ -305,14 +356,11 @@ Expr *parse_multicand(std::istream &in, std::stack<char> &paren){
     }
     
     //  case 4: <multicand> = _let <variable> = <expr> _in <expr>
+    //          <multicand> = _if <expr> _then <expr> _else <expr>
     else if (c == '_'){
-        Expr *let = parse_let(in, paren);
-        skip_whitespace(in);
-        int check = in.peek();
-        if (check == ')' && (paren.empty())){
-            throw std::runtime_error("missing open parentheses");
-        }
-        return let;
+        consume(in, '_');
+        Expr *res = parseUs(in, paren);
+        return res;
     }
     
     //  Invalid input
@@ -321,4 +369,29 @@ Expr *parse_multicand(std::istream &in, std::stack<char> &paren){
         throw std::runtime_error("invalid input");
     }
 
+}
+
+
+Expr *parseUs(std::istream &in, std::stack<char> &paren) {
+    skip_whitespace(in);
+    int check = in.peek();
+    Expr *result;
+    
+    if (check == 'l') {
+        result = parse_let(in, paren);
+    }
+    else if (check == 'i') {
+        result = parse_if(in, paren);
+    }
+    else {
+        throw std::runtime_error("invalid input");
+    }
+    
+    skip_whitespace(in);
+    int c = in.peek();
+    if (c == ')' && (paren.empty())){
+        throw std::runtime_error("missing open parentheses");
+    }
+    
+    return result;
 }

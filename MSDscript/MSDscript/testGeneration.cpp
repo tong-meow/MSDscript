@@ -11,12 +11,13 @@
 
 /*
  GENERATING EXPRESSIONS:
- 〈expr〉 = 〈number〉                              ---- 30%
-         | ( 〈expr〉 )                            ---- 10%
-         | 〈expr〉 + 〈expr〉                      ---- 10%
-         | 〈expr〉 * 〈expr〉                      ---- 10%
-         | 〈variable〉                            ---- 30%
-         | _let 〈variable〉 = 〈expr〉 _in 〈expr 〉---- 10%
+ 〈expr〉 = 〈number〉                               ---- 30%
+         | ( 〈expr〉 )                             ---- 10%
+         | 〈expr〉 + 〈expr〉                       ---- 10%
+         | 〈expr〉 * 〈expr〉                       ---- 10%
+         | 〈variable〉                             ---- 30%
+         | _let 〈variable〉 = 〈expr〉 _in 〈expr 〉 ---- 5%
+         | _if 〈expr〉 _then 〈expr〉 _else 〈expr 〉---- 5%
  */
 std::string random_expr_string() {
     // generate a random number randNum
@@ -45,10 +46,15 @@ std::string random_expr_string() {
     }
     // 75 <= randNum < 100, generate a random
     //                  _let <variable> = <expr> _in <expr>
-    else{
+    else if (((randNum % 100) >= 90) && ((randNum % 100) < 95)){
         return " _let " + random_var()
                + " = " + random_expr_string()
                + " _in " + random_expr_string();
+    }
+    else{
+        return "_if " + random_expr_string()
+               + "_then " + random_expr_string()
+               + "_else " + random_expr_string();
     }
 }
 
