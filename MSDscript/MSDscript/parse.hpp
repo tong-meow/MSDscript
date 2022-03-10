@@ -20,6 +20,7 @@ std::string getNChars(std::istream &in, int numOfChars);
 
 Expr *parse_num(std::istream &in);
 VarExpr *parse_var(std::istream &in);
+Expr *parse_equal(std::istream &in, std::stack<char> &paren);
 Expr *parse_let(std::istream &in, std::stack<char> &paren);
 Expr *parse_if(std::istream &in, std::stack<char> &paren);
 

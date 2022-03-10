@@ -16,16 +16,24 @@
 #include "val.hpp"
 
 void use_arguments(int argc, char **argv){
+    
     // if argc == "./msdscript"
     if(argc == 1){
         return;
     }
 
     // if argc >= 2
-    int index = 1;
+    // supported:
+    //  - ./msdscript --help
+    //  - ./msdscript --test
+    //  - ./msdscript --interp
+    //  - ./msdscript --print
+    //  - ./msdscript --pretty-print
+
     // add a boolean to record if the program is tested or not
     bool tested = false;
     
+    int index = 1;
     while(index <= argc-1){
         
         std::string command = argv[index];
@@ -42,6 +50,7 @@ void use_arguments(int argc, char **argv){
             std::cout << "-------------------\n";
             return;
         }
+        
         // deal with test in terminal
         else if ( command == "--test" ){
             if (!tested) {
@@ -58,9 +67,9 @@ void use_arguments(int argc, char **argv){
                 return;
             }
         }
+        
         // deal with interp in terminal
         else if (command == "--interp"){
-//            std::cout << "Please enter an expression:\n";
             try {
                 // parse the std::cin
                 std::stack<char> paren;
@@ -69,22 +78,20 @@ void use_arguments(int argc, char **argv){
                 std::string result = (expr -> interp()) -> to_string();
                 // print out result
                 std::cout << result << std::endl;
-//                std::cout << "Result after interpation: " << result << "\n";
             } catch (std::runtime_error& e){
                 std::cout << "Error: " << e.what() << std::endl;
                 exit(1);
             }
             return;
         }
+        
         // deal with print in terminal
         else if (command == "--print"){
-//            std::cout << "Please enter an expression:\n";
             try{
                 // parse the std::cin
                 std::stack<char> paren;
                 Expr *expr = parse_expr(std::cin, paren, true);
                 // print the std::cin
-//                std::cout << "Result: ";
                 expr -> print(std::cout);
                 std::cout << "\n";
             } catch (std::runtime_error& e){
@@ -93,15 +100,14 @@ void use_arguments(int argc, char **argv){
             }
             return;
         }
+        
         // deal with pretty print in terminal
         else if (command == "--pretty-print"){
-//            std::cout << "Please enter an expression:\n";
             try{
                 // parse the std::cin
                 std::stack<char> paren;
                 Expr *expr = parse_expr(std::cin, paren, true);
                 // print the std::cin
-//                std::cout << "Result:\n";
                 std::string result = expr -> to_pretty_string();
                 std::cout << result << "\n";
             } catch (std::runtime_error& e){
@@ -110,10 +116,12 @@ void use_arguments(int argc, char **argv){
             }
             return;
         }
+        
         else{
             std::cerr << "Command not found.\n";
             exit(1);
         }
+        
         index++;
     }
 }

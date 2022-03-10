@@ -12,7 +12,7 @@
 #include "val.hpp"
 
 
-/*//////////////////NON-VIRTUAL FUNCTIONS//////////////////*/
+/*/////////////////////////////// NON-VIRTUAL FUNCTIONS ///////////////////////////////*/
 
 // to_string function uses print() to return a string version of an Expr
 std::string Expr::to_string(){
@@ -23,7 +23,6 @@ std::string Expr::to_string(){
 
 // the pretty_print function uses helper preety_print_at() function to print an Expr
 void Expr::pretty_print(std::ostream &os){
-//    this -> pretty_print_at(os, false, false, false);
     this -> pretty_print_at(os, prec_none, false, false, 0);
 }
 
@@ -37,9 +36,9 @@ std::string Expr::to_pretty_string(){
 
 
 
-/*//////////////////SUBCLASSES//////////////////*/
+/*/////////////////////////////// SUBCLASSES ///////////////////////////////*/
 
-// subclass 1: NumExpr
+/*/////////////////// subclass 1: NumExpr ///////////////////*/
 
 NumExpr::NumExpr(int val){
     this -> val = val;
@@ -67,9 +66,6 @@ void NumExpr::print(std::ostream& os){
     os << (this -> val);
 }
 
-//void NumExpr::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
-//    os << (this -> val);
-//}
 void NumExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                           bool nestedLet, int spaces){
     os << (this -> val);
@@ -77,7 +73,8 @@ void NumExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 
 
 
-// subclass 2: AddExpr
+
+/*/////////////////// subclass 2: AddExpr ///////////////////*/
 
 AddExpr::AddExpr(Expr* lhs, Expr* rhs){
     this -> lhs = lhs;
@@ -151,7 +148,8 @@ void AddExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 }
 
 
-// subclass 3: MultExpr
+
+/*/////////////////// subclass 3: MultExpr ///////////////////*/
 
 MultExpr::MultExpr(Expr* lhs, Expr* rhs){
     this -> lhs = lhs;
@@ -225,7 +223,8 @@ void MultExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 }
 
 
-// subclass 4: VarExpr
+
+/*/////////////////// subclass 4: VarExpr ///////////////////*/
 
 VarExpr::VarExpr(std::string str){
     this -> str = str;
@@ -269,7 +268,8 @@ void VarExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 
 
 
-// subclass 5: LetExpr
+
+/*/////////////////// subclass 5: LetExpr ///////////////////*/
 LetExpr::LetExpr(VarExpr* varName, Expr* rhs, Expr* body){
     this -> varName = varName;
     this -> rhs = rhs;
@@ -373,7 +373,8 @@ void LetExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 
 
 
-// subclass 6: BoolExpr
+
+/*/////////////////// subclass 6: BoolExpr ///////////////////*/
 BoolExpr::BoolExpr(bool val){
     this -> val = val;
 }
@@ -414,7 +415,9 @@ void BoolExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 }
 
 
-// subclass 7: EqualExpr
+
+/*/////////////////// subclass 7: EqualExpr ///////////////////*/
+
 EqualExpr::EqualExpr(Expr* left, Expr* right){
     this -> left = left;
     this -> right = right;
@@ -470,63 +473,70 @@ void EqualExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 }
 
 
-// subclass 8: IfExpr
-IfExpr::IfExpr(Expr* condition, Expr* result1, Expr* result2){
-    this -> condition = condition;
-    this -> result1 = result1;
-    this -> result2 = result2;
+
+
+/*/////////////////// subclass 8: IfExpr ///////////////////*/
+
+IfExpr::IfExpr(Expr* test_part, Expr* then_part, Expr* else_part){
+    this -> test_part = test_part;
+    this -> then_part = then_part;
+    this -> else_part = else_part;
 }
 
 bool IfExpr::equals(Expr* e){
     IfExpr *target = dynamic_cast<IfExpr*>(e);
     if (target == NULL) return false;
-    return ((this -> condition) -> equals(target -> condition) &&
-            (this -> result1) -> equals(target -> result1) &&
-            (this -> result2) -> equals(target -> result2));
+    return ((this -> test_part) -> equals(target -> test_part) &&
+            (this -> then_part) -> equals(target -> then_part) &&
+            (this -> else_part) -> equals(target -> else_part));
 }
 
 Val* IfExpr::interp(){
-    Val* cdt = this -> condition -> interp();
-    BoolVal *condition = dynamic_cast<BoolVal*>(cdt);
-    if (condition == NULL){
+    // cast the test_part
+    Val* test = this -> test_part -> interp();
+    BoolVal *test_val = dynamic_cast<BoolVal*>(test);
+    // null: test_part is not a boolean value, error
+    if (test_val == NULL){
         throw std::runtime_error("Error: IfExpr's condition is not a boolean value.");
     }
-    else if ( (condition -> val) == true ) {
-        return result1 -> interp();
+    // true: value = then_part
+    else if ( (test_val -> val) == true ) {
+        return this -> then_part -> interp();
     }
+    // false: value = else_part
     else{
-        return result2 -> interp();
+        return this -> else_part -> interp();
     }
 }
 
 bool IfExpr::has_variable(){
-    return ((this -> condition) -> has_variable() ||
-            (this -> result1) -> has_variable() ||
-            (this -> result2) -> has_variable());
+    return ((this -> test_part) -> has_variable() ||
+            (this -> then_part) -> has_variable() ||
+            (this -> else_part) -> has_variable());
 }
 
 Expr* IfExpr::subst(std::string s, Expr *e){
-    return new IfExpr(((this -> condition) -> subst(s, e)),
-                      ((this -> result1) -> subst(s, e)),
-                      ((this -> result2) -> subst(s, e)));
+    return new IfExpr(((this -> test_part) -> subst(s, e)),
+                      ((this -> then_part) -> subst(s, e)),
+                      ((this -> else_part) -> subst(s, e)));
 }
 
 void IfExpr::print(std::ostream& os){
     os << "(_if (";
-    this -> condition -> print(os);
+    this -> test_part -> print(os);
     os << ") _then (";
-    this -> result1 -> print(os);
+    this -> then_part -> print(os);
     os << ") _else (";
-    this -> result2 -> print(os);
+    this -> else_part -> print(os);
     os << "))";
 }
 
 void IfExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                      bool nestedLet, int spaces){
     os << "_if ";
-    this -> condition -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
+    this -> test_part -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
     os << "\n_then ";
-    this -> result1 -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
+    this -> then_part -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
     os << "\n_else ";
-    this -> result2 -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
+    this -> else_part -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
 }

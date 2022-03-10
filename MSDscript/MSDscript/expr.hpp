@@ -43,7 +43,6 @@ public:
     // pretty_print is used to print the Expr to a referenced ostream (with better layout)
     void pretty_print(std::ostream& os);
     // pretty_print_at is the helper of pretty_print()
-//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs) = 0;
     virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                                  bool nestedLet, int spaces) = 0;
     // to_pretty_string is used to convert an Expr to its string version with pretty_print()
@@ -98,7 +97,6 @@ public:
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
-//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
     virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                                  bool nestedLet, int spaces);
 };
@@ -115,7 +113,6 @@ public:
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
-//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
     virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                                  bool nestedLet, int spaces);
 };
@@ -135,7 +132,6 @@ public:
     virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *e);
     virtual void print(std::ostream& os);
-//    virtual void pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs);
     virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
                                  bool nestedLet, int spaces);
 };
@@ -177,11 +173,11 @@ public:
 // subclass 8: IfExpr
 class IfExpr : public Expr{
 public:
-    Expr* condition;
-    Expr* result1;
-    Expr* result2;
+    Expr* test_part;
+    Expr* then_part;
+    Expr* else_part;
     
-    IfExpr(Expr* condition, Expr* result1, Expr* result2);
+    IfExpr(Expr* test_part, Expr* then_part, Expr* else_part);
     virtual bool equals(Expr* e);
     virtual Val* interp();
     virtual bool has_variable();

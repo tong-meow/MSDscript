@@ -642,9 +642,9 @@ TEST_CASE("Parse Add"){
     CHECK(parse("-7 + 6") -> equals (new AddExpr(new NumExpr(-7), new NumExpr(6))));
     CHECK(parse("(3 + 2)") -> equals (new AddExpr(new NumExpr(3), new NumExpr(2))));
     CHECK(parse("   5+1") -> equals (new AddExpr(new NumExpr(5), new NumExpr(1))));
-    CHECK_THROWS_WITH(parse("(9 +"), "invalid input");
+    CHECK_THROWS_WITH(parse("(9 +"), "invalid input (parse_multicand())");
     CHECK_THROWS_WITH(parse("(9 +1"), "missing close parentheses");
-    CHECK_THROWS_WITH(parse("9 +)"), "invalid input");
+    CHECK_THROWS_WITH(parse("9 +)"), "invalid input (parse_multicand())");
 }
 
 TEST_CASE("Parse Mult"){
@@ -663,8 +663,19 @@ TEST_CASE("Parse Var"){
     CHECK(parse("  dog") -> equals (new VarExpr("dog")));
     CHECK(parse("OWLS") -> equals (new VarExpr("OWLS")));
     CHECK(parse("wild_animals") -> equals (new VarExpr("wild_animals")));
-    CHECK_THROWS_WITH(parse("wha.le"), "invalid input");
+    CHECK_THROWS_WITH(parse("wha.le"), "invalid input (parse_var())");
 }
+
+TEST_CASE("Parse Bool"){
+    CHECK(parse("_true") -> equals(new BoolExpr(true)));
+    CHECK(parse("_false") -> equals(new BoolExpr(false)));
+    CHECK_THROWS_WITH(parse("_t"), "invalid input (parse_bool())");
+    CHECK_THROWS_WITH(parse("_fals 1"), "invalid input (parse_bool(), '_false')");
+}
+
+//TEST_CASE("Parse Equal"){
+//
+//}
 
 TEST_CASE("Parse _let"){
     CHECK(parse("_let x = 5 _in x+2") -> equals
@@ -673,8 +684,20 @@ TEST_CASE("Parse _let"){
     CHECK(parse("_let x = (x+2) _in      (x+-3)") -> equals
           (new LetExpr(new VarExpr("x"), new AddExpr(new VarExpr("x"), new NumExpr(2)),
                     new AddExpr(new VarExpr("x"), new NumExpr(-3)))));
-    CHECK_THROWS_WITH(parse("_let x = 1    _i"), "invalid input");
+    CHECK_THROWS_WITH(parse("_let x = 1    _i"), "invalid input (parse_let(), '_in')");
 }
+
+
+TEST_CASE("Parse _if"){
+    CHECK(parse("_if _true _then 1 _else 0") -> equals(new IfExpr(new BoolExpr(true), new NumExpr(1), new NumExpr(0))));
+    CHECK(parse("_if 3=2+1 _then a _else b") -> equals(new IfExpr(
+                                                            new EqualExpr(new NumExpr(3),
+                                                                          new AddExpr(new NumExpr(2), new NumExpr(1))),
+                                                            new VarExpr("a"),
+                                                            new VarExpr("b"))));
+    CHECK_THROWS_WITH(parse("_if x = 1 then 2 else 1"), "invalid input (parse_if(), '_then')");
+}
+
 
 TEST_CASE("Mixed Parse"){
     CHECK(parse("6 + (2 * -7)") -> equals(new AddExpr(new NumExpr(6),
