@@ -33,8 +33,7 @@ void use_arguments(int argc, char **argv){
     // add a boolean to record if the program is tested or not
     bool tested = false;
     
-    int index = 1;
-    while(index <= argc-1){
+    for(int index = 1; index < argc; index++){
         
         std::string command = argv[index];
         
@@ -70,58 +69,63 @@ void use_arguments(int argc, char **argv){
         
         // deal with interp in terminal
         else if (command == "--interp"){
-            try {
-                // parse the std::cin
-                std::stack<char> paren;
-                Expr *expr = parse_expr(std::cin, paren, true);
-                // interp the std::cin
-                std::string result = (expr -> interp()) -> to_string();
-                // print out result
-                std::cout << result << std::endl;
-            } catch (std::runtime_error& e){
-                std::cout << "Error: " << e.what() << std::endl;
-                exit(1);
+            while(true){
+                try {
+                    // parse the std::cin
+                    Expr *expr = parse_stream(std::cin);
+                    // interp the std::cin
+                    std::string result = (expr -> interp()) -> to_string();
+                    // print out result
+                    std::cout << result << std::endl;
+                } catch (std::runtime_error& e){
+                    std::cout << "Error: " << e.what() << std::endl;
+                    exit(1);
+                }
             }
             return;
         }
         
         // deal with print in terminal
         else if (command == "--print"){
-            try{
-                // parse the std::cin
-                std::stack<char> paren;
-                Expr *expr = parse_expr(std::cin, paren, true);
-                // print the std::cin
-                expr -> print(std::cout);
-                std::cout << "\n";
-            } catch (std::runtime_error& e){
-                std::cout << "Error: " << e.what() << std::endl;
-                exit(1);
+            while(true){
+                try{
+                    // parse the std::cin
+                    Expr *expr = parse_expr(std::cin);
+                    // print the std::cin
+                    expr -> print(std::cout);
+                    std::cout << "\n";
+                } catch (std::runtime_error& e){
+                    std::cout << "Error: " << e.what() << std::endl;
+                    exit(1);
+                }
+                if (strcmp(argv[index+1], "fin")){
+                    return;
+                }
             }
-            return;
         }
         
         // deal with pretty print in terminal
         else if (command == "--pretty-print"){
-            try{
-                // parse the std::cin
-                std::stack<char> paren;
-                Expr *expr = parse_expr(std::cin, paren, true);
-                // print the std::cin
-                std::string result = expr -> to_pretty_string();
-                std::cout << result << "\n";
-            } catch (std::runtime_error& e){
-                std::cout << "Error: " << e.what() << std::endl;
-                exit(1);
+            while(true){
+                try{
+                    // parse the std::cin
+                    Expr *expr = parse_expr(std::cin);
+                    // print the std::cin
+                    std::string result = expr -> to_pretty_string();
+                    std::cout << result << "\n";
+                } catch (std::runtime_error& e){
+                    std::cout << "Error: " << e.what() << std::endl;
+                    exit(1);
+                }
+                if (strcmp(argv[index+1], "fin")){
+                    return;
+                }
             }
-            return;
         }
         
         else{
             std::cerr << "Command not found.\n";
             exit(1);
         }
-        
-        index++;
     }
 }

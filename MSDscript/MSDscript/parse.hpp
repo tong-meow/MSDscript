@@ -13,21 +13,26 @@
 #include "expr.hpp"
 
 Expr *parse(std::string str);
+Expr *parse_stream(std::istream &in);
 
 void consume(std::istream &in, int c);
 void skip_whitespace(std::istream &in);
-std::string getNChars(std::istream &in, int numOfChars);
+bool check_var_validity(int c);
+std::string get_keyword(std::istream &in);
 
 Expr *parse_num(std::istream &in);
-VarExpr *parse_var(std::istream &in);
-Expr *parse_equal(std::istream &in, std::stack<char> &paren);
-Expr *parse_let(std::istream &in, std::stack<char> &paren);
-Expr *parse_if(std::istream &in, std::stack<char> &paren);
+Expr *parse_var(std::istream &in);
+Expr *parse_comparg(std::istream &in);
 
-Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck);
-Expr *parse_addend(std::istream &in, std::stack<char> &paren);
-Expr *parse_multicand(std::istream &in, std::stack<char> &paren);
+Expr *parse_let(std::istream &in);
+Expr *parse_if(std::istream &in);
+Expr *parse_fun(std::istream &in);
 
-Expr *parseUs(std::istream &in, std::stack<char> &paren);
+Expr *parse_expr(std::istream &in);
+Expr *parse_addend(std::istream &in);
+Expr *parse_multicand(std::istream &in);
+Expr *parse_inner(std::istream &in);
+
+Expr *parse_usage(std::istream &in);
 
 #endif /* parse_hpp */
