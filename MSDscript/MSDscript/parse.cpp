@@ -10,13 +10,22 @@
 #include <stack>
 #include "parse.hpp"
 
-/*//////////////////HELPER FUNCTIONS//////////////////*/
+/*////////////////// HELPER FUNCTIONS //////////////////*/
 
 Expr *parse(std::string str){
     std::stringstream ss;
     ss << str;
-    std::stack<char> paren;
-    Expr* e = parse_expr(ss, paren, true);
+    Expr* e = parse_expr(ss);
+    skip_whitespace(ss);
+    if (!ss.eof()){
+        throw std::runtime_error("Invalid input (parse).");
+    }
+    return e;
+}
+
+Expr *parse_stream(std::istream &in){
+    Expr* e = parse_expr(in);
+    skip_whitespace(in);
     return e;
 }
 
@@ -25,31 +34,68 @@ void consume(std::istream &in, int c){
     if (in.peek() == c){
         in.get();
     }
+    else{
+        throw std::runtime_error("Consume char doesn't match.");
+    }
 }
 
 
 void skip_whitespace(std::istream &in){
-    while (true){
+    while(true){
         int c = in.peek();
-        if (c != ' '){
+        if (!isspace(c)){
             break;
+        }
+        consume(in, c);
+    }
+}
+
+
+std::string get_keyword(std::istream &in){
+    std::string keyword;
+    
+    int c = in.peek();
+    
+    // ==
+    if (c == '='){
+        keyword += c;
+        consume(in, c);
+        c = in.peek();
+        keyword += c;
+        if (keyword == "=="){
+            consume(in, '=');
+            return keyword;
         }else{
-            consume(in, c);
+            throw std::runtime_error("Invalid input ('==' keyword).");
         }
     }
-}
-
-std::string getNChars(std::istream &in, int numOfChars){
-    std::string result;
-    for (int i = 0; i < numOfChars; i++){
-        result += in.peek();
-        consume(in, in.peek());
+    
+    while(true){
+        if ( (c != '(') && (c != EOF) &&
+            (!isdigit(c)) && (!isspace(c))){
+            keyword += c;
+            consume(in, c);
+            c = in.peek();
+        }else{
+            break;
+        }
     }
-    return result;
+    return keyword;
+}
+
+// used for parse_var() to check if a char should be include in a var name
+bool check_var_validity(int c){
+    if (c == EOF || isspace(c)){
+        return false;
+    }
+    if (c == '+' || c == '=' || c == '*' || c == '(' || c == ')'){
+        return false;
+    }
+    return true;
 }
 
 
-/*////////////////// PARSE NUM / VAR / LET / IF FACTORS //////////////////*/
+/*////////////////// PARSE NUM / VAR FACTORS //////////////////*/
 
 Expr *parse_num(std::istream &in){
     int number = 0;
@@ -58,6 +104,10 @@ Expr *parse_num(std::istream &in){
     if (in.peek() == '-') {
         negative = true;
         consume(in, '-');
+        int c = in.peek();
+        if (c == EOF || c == ' '){
+            throw std::runtime_error("Invalid input (parse_num).");
+        }
     }
 
     while(true){
@@ -78,378 +128,301 @@ Expr *parse_num(std::istream &in){
 }
 
 
-VarExpr *parse_var(std::istream &in){
+Expr *parse_var(std::istream &in){
     std::string variable;
-    
-    while(true){
-        int c = in.peek();
+    int c = in.peek();
+    while(check_var_validity(c)){
         // the var name support '_', e.g: class_number, studentName_ is considered valid
         if (isalpha(c) || c == '_'){
             consume(in, c);
             variable += c;
         }
-        // if the next character is these below, return the var
-        // note: 10 is new line
-        else if( (c == ' ') || (c == '+') || (c == '=') || (c == ')') ||
-                 (c == '*') || (c == 10) || (c == -1)){
-            break;
-        }
         // if the next character is other chars, e.g: class.., myCat-,
         // these are considered invalid
         else{
-            throw std::runtime_error("invalid input (parse_var())");
+            throw std::runtime_error("Invalid input (parse_var).");
         }
+        c = in.peek();
     }
     
     return new VarExpr(variable);
 }
 
-Expr *parse_bool(std::istream &in){
-    
-    std::string boolean;
-    // "_true" or "_false"
-    boolean = getNChars(in, 4);
-    
-    if (boolean == "true"){
-        return new BoolExpr(true);
-    }
-    else if (boolean == "fals"){
-        int nextChar = in.get();
-        if (nextChar == 'e'){
-            return new BoolExpr(false);
-        }
-        else{
-            throw std::runtime_error("invalid input (parse_bool(), '_false')");
-        }
-    }
-    else{
-        throw std::runtime_error("invalid input (parse_bool())");
-    }
-}
-
-Expr *parse_equal(std::istream &in, std::stack<char> &paren){
-    Expr* left;
-    Expr* right;
-    
-    left = parse_expr(in, paren, false);
-    skip_whitespace(in);
-    int equal = in.peek();
-    
-    if (equal == '='){
-        consume(in, '=');
-        right = parse_expr(in, paren, false);
-    }
-    else {
-        throw std::runtime_error("invalid input (parse_equal(), '=')");
-    }
-    
-    return new EqualExpr(left, right);
-}
 
 
-Expr *parse_let(std::istream &in, std::stack<char> &paren){
-    // 〈multicand〉 =  _let 〈variable〉 = 〈expr〉 _in 〈expr〉
+/*////////////////// PARSE _LET / _IF / _FUN FACTORS //////////////////*/
+
+Expr *parse_let(std::istream &in){
+    // _let <variable> = <expr> _in <expr>
     VarExpr* var;
     Expr* rhs;
     Expr* body;
     
-    // CHECK "_let" : get the first 3 char
-    // note: "_" is already consumed
-    std::string keywordLet;
-    keywordLet = getNChars(in, 3);
-    
-    // if first 3 chars == _let
-    if (keywordLet == "let"){
-        skip_whitespace(in);
-        // get the var
-        // if var is not a varExpr, parse_var() prints error message
-        var = parse_var(in);
-    }
-    // if first 3 chars != _let
-    else{
-        throw std::runtime_error("invalid input (parse_let(), '_let')");
-    }
-    
-    // CHECK "=" : get the "="
+    // parse var
     skip_whitespace(in);
-    int equal = in.peek();
-    // if the next char is "="
-    if (equal == '='){
-        consume(in, equal);
-        skip_whitespace(in);
-        // get the rhs
-        rhs = parse_expr(in, paren, false);
-    }
-    // if "=" is not found
-    else{
-        throw std::runtime_error("invalid input (parse_let(), '=')");
+    var = dynamic_cast<VarExpr*>(parse_var(in));
+    if (var == NULL){
+        throw std::runtime_error("Invalid input (parse_let, parse_var).");
     }
     
-    
-    // CHECK "_in" : get the next 3 chars, they should be _in
+    // check if there is an "="
     skip_whitespace(in);
-    std::string keywordIn;
-    keywordIn = getNChars(in, 3);
-    // if the next 3 chars are _in
-    if (keywordIn == "_in"){
+    int c = in.peek();
+    if (c == '='){
+        consume(in, c);
         skip_whitespace(in);
-        // get the body
-        body = parse_expr(in, paren, false);
+        rhs = parse_expr(in);
     }
-    // if the next 3 chars are not _in
     else{
-        throw std::runtime_error("invalid input (parse_let(), '_in')");
+        throw std::runtime_error("Invalid input (parse_let).");
     }
-
+    
+    // check if there is a "_in"
+    skip_whitespace(in);
+    std::string keyword = get_keyword(in);
+    if (keyword == "_in"){
+        skip_whitespace(in);
+        body = parse_expr(in);
+    }
+    else{
+        throw std::runtime_error("Invalid input (parse_let).");
+    }
+    
+    skip_whitespace(in);
     return new LetExpr(var, rhs, body);
 }
 
 
-Expr *parse_if(std::istream &in, std::stack<char> &paren){
-    // <multicand> = _if <expr> _then <expr> _else <expr>
+Expr *parse_if(std::istream &in){
+    // _if <expr> _then <expr> _else <expr>
     Expr *test_part;
     Expr *then_part;
     Expr *else_part;
     
-    // CHECK "_if" : get the first 3 char
-    // note: "_" is already consumed
-    std::string keywordIf;
-    keywordIf = getNChars(in, 2);
-    
-    // if first 3 chars == _if
-    if (keywordIf == "if"){
-        skip_whitespace(in);
-        // get the expr
-        int c = in.peek();
-        if (c == '_'){
-            consume(in, c);
-            test_part = parse_bool(in);
-        }else{
-            test_part = parse_equal(in, paren);
-        }
-    }
-    // if first 3 chars != _if
-    else{
-        throw std::runtime_error("invalid input (parse_if(), '_if')");
-    }
-    
-    // CHECK "_then"
+    // parse test_part
     skip_whitespace(in);
-    std::string keywordThen;
-    keywordThen = getNChars(in, 5);
+    test_part = parse_expr(in);
     
-    if (keywordThen == "_then"){
+    // check if there is a "_then"
+    skip_whitespace(in);
+    std::string keyword = get_keyword(in);
+    if (keyword == "_then"){
         skip_whitespace(in);
-        // get the expr
-        then_part = parse_expr(in, paren, false);
+        then_part = parse_expr(in);
     }
     else{
-        throw std::runtime_error("invalid input (parse_if(), '_then')");
+        throw std::runtime_error("Invalid input (parse_if).");
     }
     
-    // CHECK "_else"
-    std::string keywordElse;
-    keywordElse = getNChars(in, 5);
-    
-    if (keywordElse == "_else"){
+    // check if there is an "_else"
+    skip_whitespace(in);
+    keyword = get_keyword(in);
+    if (keyword == "_else"){
         skip_whitespace(in);
-        // get the expr
-        else_part = parse_expr(in, paren, false);
+        else_part = parse_expr(in);
     }
     else{
-        throw std::runtime_error("invalid input (parse_if(), '_else')");
+        throw std::runtime_error("Invalid input (parse_if).");
     }
     
     return new IfExpr(test_part, then_part, else_part);
 }
 
 
-
-/*/////////////PARSE ADDEND / MULTCAND / EXPR STRUCTURES//////////////*/
-
-/*
- 〈expr〉 = 〈addend〉
-         | 〈addend〉 + 〈expr〉
- */
-
-Expr *parse_expr(std::istream &in, std::stack<char> &paren, bool firstCheck){
-    skip_whitespace(in);
-    // parse the first <addend>
-    Expr *e;
-    e = parse_addend(in, paren);
-    skip_whitespace(in);
+Expr *parse_fun(std::istream &in){
+    // fun (var) = <expr>
+    VarExpr* formal_arg;
+    Expr* body;
     
-    // check if there is '+'
-    // if there is, parse the next <expr>
+    // parse var (function name)
+    skip_whitespace(in);
     int c = in.peek();
-    if (c == '+') {
-        consume(in, '+');
-        Expr *rhs = parse_expr(in, paren, false);
-        // firstCheck: this is a boolean to record if this is the outermost layer.
-        // this is used to check if there is invalid chars after a valid expression.
-        // for example:
-        //      - we consider (3 + 2) as a valid expression
-        //      - we consider (3 + 2).. as an invalid expression
-        //      - we consider (3 + 2)))) as an invalid expression
-        // therefore, we only check once at the outermost layer (because inner layers
-        // of function calling, valid chars is checked).
-        if (firstCheck) {
-            skip_whitespace(in);
-            int c = in.peek();
-            if (c == ')'){
-                throw std::runtime_error("missing open parentheses");
-            }
-            if (c == 10 || c == -1){
-                return new AddExpr(e, rhs);
-            }
-            else{
-                throw std::runtime_error("invalid input (parse_expr())");
-            }
-        }else{
-            return new AddExpr(e, rhs);
-        }
-    }
-    // same as above, but this is the situation when there is no '+'.
-    // e.g.:  className..., 3]]!@, etc.
-    if (!firstCheck) {
-        return e;
-    }else{
+    if (c == '('){
+        consume(in, c);
         skip_whitespace(in);
-        int c = in.peek();
-        if (c == ')'){
-            throw std::runtime_error("missing open parentheses");
+        formal_arg = dynamic_cast<VarExpr*>(parse_var(in));
+        if (formal_arg == NULL){
+            throw std::runtime_error("Invalid input (parse_fun).");
         }
-        if (c == 10 || c == -1){
-            return e;
+        skip_whitespace(in);
+        c = in.peek();
+        if (c == ')'){
+            consume(in, c);
         }
         else{
-            throw std::runtime_error("invalid input (parse_expr())");
+            throw std::runtime_error("Invalid input (parse_fun).");
         }
     }
+    else{
+        throw std::runtime_error("Invalid input (parse_fun).");
+    }
+    
+    // parse body expr
+    skip_whitespace(in);
+    body = parse_expr(in);
+    
+    return new FunExpr(formal_arg -> to_string(), body);
 }
 
 
 
+/*///////////// PARSE EXPR / COMPARG / ADDEND / MULTCAND STRUCTURES //////////////*/
+
 /*
- 〈addend〉 = 〈multicand〉
-           | 〈multicand〉 * 〈addend〉
+ 〈expr〉     = 〈comparg〉
+             | 〈comparg〉 == 〈expr〉
+〈comparg〉   = 〈addend〉
+             | 〈addend〉 + 〈comparg〉
+〈addend〉    = 〈multicand〉
+             | 〈multicand〉 * 〈addend〉
+〈multicand〉 = 〈inner〉
+             | 〈multicand〉 ( 〈expr〉 )
+〈inner〉     = 〈number〉 | ( 〈expr〉 ) | 〈variable〉
+             | _let 〈variable〉 = 〈expr〉 _in 〈expr〉
+             | _true | _false
+             | _if 〈expr〉 _then 〈expr〉 _else 〈expr〉
+             | _fun ( 〈variable〉 ) 〈expr〉
  */
 
-Expr *parse_addend(std::istream &in, std::stack<char> &paren){
+Expr *parse_expr(std::istream &in){
     skip_whitespace(in);
-    // parse the first <multicand>
-    Expr *e;
-    e = parse_multicand(in, paren);
+    // try to parse a comparg
+    Expr *comparg = parse_comparg(in);
     skip_whitespace(in);
     
-    // check if there is a *
-    // if there is, continue parse the sencond part of <addend>
+    // check if there is an '='
+    // if there is, parse the next <expr>
+    int c = in.peek();
+    if (c == '=') {
+        std::string keyword = get_keyword(in);
+        if (keyword == "=="){
+            skip_whitespace(in);
+            Expr *e = parse_expr(in);
+            return new EqualExpr(comparg, e);
+        }
+        else{
+            throw std::runtime_error("Invalid input (parse_expr).");
+        }
+    }
+    return comparg;
+}
+
+
+Expr *parse_comparg(std::istream &in){
+    skip_whitespace(in);
+    // try to parse an addend
+    Expr *addend = parse_addend(in);
+    skip_whitespace(in);
+    
+    // check if there is a '+'
+    // if there is, parse the next <comparg>
+    int c = in.peek();
+    if (c == '+'){
+        consume(in, c);
+        skip_whitespace(in);
+        Expr *comparg = parse_comparg(in);
+        return new AddExpr(addend, comparg);
+    }
+    else {
+        return addend;
+    }
+}
+
+
+Expr *parse_addend(std::istream &in){
+    skip_whitespace(in);
+    // try to parse a multicand
+    Expr *multicand = parse_multicand(in);
+    skip_whitespace(in);
+    
+    // check if there is a '*'
+    // if there is, parse the next <addend>
     int c = in.peek();
     if (c == '*') {
-        consume(in, '*');
-        Expr *rhs = parse_addend(in, paren);
-        return new MultExpr(e, rhs);
+        consume(in, c);
+        skip_whitespace(in);
+        Expr *addend = parse_addend(in);
+        return new MultExpr(multicand, addend);
     }
     else {
-        return e;
+        return multicand;
     }
 }
 
 
-/*
- <multicand> = <number>
-              | ( <expr> )
-              | <variable>
-              | _let <variable> = <expr> _in <expr>
-              | _if <expr> _then <expr> _else <expr>
- */
-
-Expr *parse_multicand(std::istream &in, std::stack<char> &paren){
+Expr *parse_multicand(std::istream &in){
     skip_whitespace(in);
-    int c = in.peek();
+    // try to parse an inner
+    Expr* e = parse_inner(in);
     
-    //  case 1: <multicand> = <number>
-    if ((c == '-') || isdigit(c)){
-        Expr *num = parse_num(in);
-        skip_whitespace(in);
-        int check = in.peek();
-        if (check == ')' && (paren.empty())){
-            throw std::runtime_error("missing open parentheses");
-        }
-        return num;
-    }
+    Expr* actual_arg;
+    skip_whitespace(in);
     
-    //  case 2: <multicand> = ( <expr> )
-    else if (c == '(') {
-        paren.push('(');
+    while (in.peek() == '(') {
         consume(in, '(');
-        Expr *e = parse_expr(in, paren, false);
         skip_whitespace(in);
-        c = in.get();
-        if (c != ')'){
-            throw std::runtime_error("missing close parentheses");
-        }else{
-            char previousInParen = paren.top();
-            if (previousInParen != '('){
-                throw std::runtime_error("missing open parentheses");
-            }else{
-                paren.pop();
-            }
-        }
-        return e;
-    }
-    
-    //  case 3: <multicand> = <variable>
-    else if (isalpha(c)){
-        VarExpr *var = parse_var(in);
+        actual_arg = parse_expr(in);
         skip_whitespace(in);
-        int check = in.peek();
-        if (check == ')' && (paren.empty())){
-            throw std::runtime_error("missing open parentheses");
-        }
-        return var;
+        consume(in, ')');
+        e = new CallExpr(e, actual_arg);
     }
+    skip_whitespace(in);
     
-    //  case 4: <multicand> = _let <variable> = <expr> _in <expr>
-    //          <multicand> = _if <expr> _then <expr> _else <expr>
-    else if (c == '_'){
-        consume(in, '_');
-        Expr *res = parseUs(in, paren);
-        return res;
-    }
-    
-    //  Invalid input
-    else{
-        consume(in, c);
-        throw std::runtime_error("invalid input (parse_multicand())");
-    }
-
+    return e;
 }
 
 
-Expr *parseUs(std::istream &in, std::stack<char> &paren) {
+Expr *parse_inner(std::istream &in) {
     skip_whitespace(in);
     int check = in.peek();
-    Expr *result;
-
-    if (check == 'l') {
-        result = parse_let(in, paren);
+    // if is an NumExpr
+    if (check == '-' || isdigit(check)){
+        return parse_num(in);
     }
-    else if (check == 'i') {
-        result = parse_if(in, paren);
+    // if is a VarExpr
+    else if (isalpha(check)){
+        return parse_var(in);
     }
-    else if (check == 'f' || check == 't'){
-        result = parse_bool(in);
+    // if has paranthesis
+    else if (check == '('){
+        consume(in, '(');
+        skip_whitespace(in);
+        Expr *e = parse_expr(in);
+        skip_whitespace(in);
+        // check if a closing paranthesis is missing
+        int c = in.peek();
+        if (c != ')'){
+            throw std::runtime_error("Missing closing paranthesis.");
+        }
+        else {
+            consume(in, c);
+        }
+        return e;
     }
+    // if is a keyword (_let / _if / _fun / _true / _false)
+    else if (check == '_'){
+        std::string keyword = get_keyword(in);
+        if (keyword == "_let"){
+            return parse_let(in);
+        }
+        else if (keyword == "_if"){
+            return parse_if(in);
+        }
+        else if (keyword == "_fun"){
+            return parse_fun(in);
+        }
+        else if (keyword == "_true"){
+            return new BoolExpr(true);
+        }
+        else if (keyword == "_false"){
+            return new BoolExpr(false);
+        }
+        else{
+            throw std::runtime_error("Invalid input (parse_inner, keyword error)");
+        }
+    }
+    // others (handle error)
     else {
-        throw std::runtime_error("invalid input (parseUs())");
+        throw std::runtime_error("Invalid input (parse_inner).");
     }
-    
-    skip_whitespace(in);
-    int c = in.peek();
-    if (c == ')' && (paren.empty())){
-        throw std::runtime_error("missing open parentheses");
-    }
-    
-    return result;
 }

@@ -53,9 +53,9 @@ public:
 // subclass 1: Num
 class NumExpr : public Expr {
 public:
-    int val;
+    int rep;
     
-    NumExpr(int val);
+    NumExpr(int rep);
     virtual bool equals(Expr *e);
     virtual Val* interp();
     virtual bool has_variable();
@@ -122,11 +122,11 @@ public:
 // 〈expr〉 = _let 〈variable〉 = 〈expr〉 _in 〈expr〉
 class LetExpr : public Expr{
 public:
-    VarExpr* varName;
+    VarExpr* var;
     Expr* rhs;
     Expr* body;
     
-    LetExpr(VarExpr* varName, Expr* rhs, Expr* body);
+    LetExpr(VarExpr* var, Expr* rhs, Expr* body);
     virtual bool equals(Expr* e);
     virtual Val* interp();
     virtual bool has_variable();
@@ -140,9 +140,9 @@ public:
 // subclass 6: BoolExpr
 class BoolExpr : public Expr{
 public:
-    bool val;
+    bool rep;
     
-    BoolExpr(bool val);
+    BoolExpr(bool rep);
     virtual bool equals(Expr* e);
     virtual Val* interp();
     virtual bool has_variable();
@@ -156,10 +156,10 @@ public:
 // subclass 7: EqualExpr
 class EqualExpr : public Expr{
 public:
-    Expr* left;
-    Expr* right;
+    Expr* lhs;
+    Expr* rhs;
     
-    EqualExpr(Expr* left, Expr* right);
+    EqualExpr(Expr* lhs, Expr* rhs);
     virtual bool equals(Expr* e);
     virtual Val* interp();
     virtual bool has_variable();
@@ -178,6 +178,40 @@ public:
     Expr* else_part;
     
     IfExpr(Expr* test_part, Expr* then_part, Expr* else_part);
+    virtual bool equals(Expr* e);
+    virtual Val* interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *e);
+    virtual void print(std::ostream& os);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
+};
+
+
+// subclass 9: FunExpr
+class FunExpr: public Expr {
+public:
+    std::string formal_arg;
+    Expr* body;
+
+    FunExpr (std::string formal_arg, Expr* body);
+    virtual bool equals(Expr* e);
+    virtual Val* interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *e);
+    virtual void print(std::ostream& os);
+    virtual void pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
+                                 bool nestedLet, int spaces);
+};
+
+
+// subclass 10: CallExpr
+class CallExpr: public Expr {
+public:
+    Expr* to_be_called;
+    Expr* actual_arg;
+    
+    CallExpr (Expr* to_be_called, Expr* actual_arg);
     virtual bool equals(Expr* e);
     virtual Val* interp();
     virtual bool has_variable();
