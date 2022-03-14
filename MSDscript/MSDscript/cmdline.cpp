@@ -98,10 +98,8 @@ void use_arguments(int argc, char **argv){
                     std::cout << "Error: " << e.what() << std::endl;
                     exit(1);
                 }
-                if (strcmp(argv[index+1], "fin")){
-                    return;
-                }
             }
+            return;
         }
         
         // deal with pretty print in terminal
@@ -117,10 +115,8 @@ void use_arguments(int argc, char **argv){
                     std::cout << "Error: " << e.what() << std::endl;
                     exit(1);
                 }
-                if (strcmp(argv[index+1], "fin")){
-                    return;
-                }
             }
+            return;
         }
         
         else{
