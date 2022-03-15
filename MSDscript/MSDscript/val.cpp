@@ -18,13 +18,13 @@ NumVal::NumVal(int rep){
     this -> rep = rep;
 }
 
-bool NumVal::equals(Val *v){
-    NumVal *target = dynamic_cast<NumVal*>(v);
+bool NumVal::equals(PTR(Val) v){
+    PTR(NumVal) target = dynamic_cast<PTR(NumVal)>(v);
     if (target == NULL) return false;
     return ((this -> rep) == (target -> rep));
 }
 
-Expr* NumVal::to_expr(){
+PTR(Expr) NumVal::to_expr(){
     return new NumExpr(this -> rep);
 }
 
@@ -32,23 +32,23 @@ std::string NumVal::to_string(){
     return std::to_string(this -> rep);
 }
 
-Val* NumVal::add_to(Val* v){
-    NumVal *target = dynamic_cast<NumVal*>(v);
+PTR(Val) NumVal::add_to(PTR(Val) v){
+    PTR(NumVal) target = dynamic_cast<PTR(NumVal)>(v);
     if (target == nullptr) {
         throw std::runtime_error("Error: rhs of Val add_to() must be a NumVal.");
     }
     return new NumVal((this -> rep) + (target -> rep));
 }
 
-Val* NumVal::mult_by(Val* v){
-    NumVal *target = dynamic_cast<NumVal*>(v);
+PTR(Val) NumVal::mult_by(PTR(Val) v){
+    PTR(NumVal) target = dynamic_cast<PTR(NumVal)>(v);
     if (target == nullptr) {
         throw std::runtime_error("Error: rhs of Val mult_by() must be a NumVal.");
     }
     return new NumVal((this -> rep) * (target -> rep));
 }
 
-Val* NumVal::call(Val* arg){
+PTR(Val) NumVal::call(PTR(Val) arg){
     throw std::runtime_error("Error: call() is unavailable for a NumVal.");
 }
 
@@ -59,14 +59,14 @@ BoolVal::BoolVal(bool val){
     this -> rep = val;
 }
 
-bool BoolVal::equals(Val *v){
-    BoolVal *target = dynamic_cast<BoolVal*>(v);
+bool BoolVal::equals(PTR(Val) v){
+    PTR(BoolVal) target = dynamic_cast<PTR(BoolVal)>(v);
     if (target == NULL) return false;
     return ((this -> rep) == (target -> rep));
 }
 
 
-Expr* BoolVal::to_expr(){
+PTR(Expr) BoolVal::to_expr(){
     return NULL;
 }
 
@@ -77,15 +77,15 @@ std::string BoolVal::to_string(){
         return "_false";
 }
 
-Val* BoolVal::add_to(Val* v){
+PTR(Val) BoolVal::add_to(PTR(Val) v){
     throw std::runtime_error("Error: BoolVal cannot be added.");
 }
 
-Val* BoolVal::mult_by(Val* v){
+PTR(Val) BoolVal::mult_by(PTR(Val) v){
     throw std::runtime_error("Error: BoolVal cannot be multiplied.");
 }
 
-Val* BoolVal::call(Val* arg){
+PTR(Val) BoolVal::call(PTR(Val) arg){
     throw std::runtime_error("Error: call() is unavailable for a BoolVal.");
 }
 
@@ -93,13 +93,13 @@ Val* BoolVal::call(Val* arg){
 
 // subclass 3: FunVal
 
-FunVal::FunVal(std::string formal_arg, Expr* body){
+FunVal::FunVal(std::string formal_arg, PTR(Expr) body){
     this -> formal_arg = formal_arg;
     this -> body = body;
 }
 
-bool FunVal::equals(Val *val) {
-    FunVal *target = dynamic_cast<FunVal*>(val);
+bool FunVal::equals(PTR(Val) val) {
+    PTR(FunVal) target = dynamic_cast<PTR(FunVal)>(val);
     if (target == NULL) return false;
     else {
         return (this -> formal_arg == target -> formal_arg &&
@@ -107,7 +107,7 @@ bool FunVal::equals(Val *val) {
     }
 }
 
-Expr* FunVal::to_expr() {
+PTR(Expr) FunVal::to_expr() {
     return new FunExpr(this -> formal_arg, this -> body);
 }
 
@@ -116,16 +116,16 @@ std::string FunVal::to_string() {
             this -> body -> to_string());
 }
 
-Val* FunVal::add_to(Val* v) {
+PTR(Val) FunVal::add_to(PTR(Val) v) {
     throw std::runtime_error("Error: FunVal cannot be added.");
 }
 
-Val* FunVal::mult_by(Val* v) {
+PTR(Val) FunVal::mult_by(PTR(Val) v) {
     throw std::runtime_error("Error: FunVal cannot be multiplied.");
 }
 
-Val* FunVal::call(Val *arg) {
-    LetExpr* let = new LetExpr(new VarExpr(this -> formal_arg),
+PTR(Val) FunVal::call(PTR(Val) arg) {
+    PTR(LetExpr) let = new LetExpr(new VarExpr(this -> formal_arg),
                                arg -> to_expr(),
                                this -> body);
     return let->interp();

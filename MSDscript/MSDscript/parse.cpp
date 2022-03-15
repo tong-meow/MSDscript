@@ -9,13 +9,14 @@
 #include <sstream>
 #include <stack>
 #include "parse.hpp"
+#include "pointer.hpp"
 
 /*////////////////// HELPER FUNCTIONS //////////////////*/
 
-Expr *parse(std::string str){
+PTR(Expr) parse(std::string str){
     std::stringstream ss;
     ss << str;
-    Expr* e = parse_expr(ss);
+    PTR(Expr) e = parse_expr(ss);
     skip_whitespace(ss);
     if (!ss.eof()){
         throw std::runtime_error("Invalid input (parse).");
@@ -23,8 +24,8 @@ Expr *parse(std::string str){
     return e;
 }
 
-Expr *parse_stream(std::istream &in){
-    Expr* e = parse_expr(in);
+PTR(Expr) parse_stream(std::istream &in){
+    PTR(Expr) e = parse_expr(in);
     skip_whitespace(in);
     return e;
 }
@@ -97,7 +98,7 @@ bool check_var_validity(int c){
 
 /*////////////////// PARSE NUM / VAR FACTORS //////////////////*/
 
-Expr *parse_num(std::istream &in){
+PTR(Expr) parse_num(std::istream &in){
     int number = 0;
     bool negative = false;
 
@@ -128,7 +129,7 @@ Expr *parse_num(std::istream &in){
 }
 
 
-Expr *parse_var(std::istream &in){
+PTR(Expr) parse_var(std::istream &in){
     std::string variable;
     int c = in.peek();
     while(check_var_validity(c)){
@@ -152,15 +153,15 @@ Expr *parse_var(std::istream &in){
 
 /*////////////////// PARSE _LET / _IF / _FUN FACTORS //////////////////*/
 
-Expr *parse_let(std::istream &in){
+PTR(Expr) parse_let(std::istream &in){
     // _let <variable> = <expr> _in <expr>
-    VarExpr* var;
-    Expr* rhs;
-    Expr* body;
+    PTR(VarExpr) var;
+    PTR(Expr) rhs;
+    PTR(Expr) body;
     
     // parse var
     skip_whitespace(in);
-    var = dynamic_cast<VarExpr*>(parse_var(in));
+    var = dynamic_cast<PTR(VarExpr)>(parse_var(in));
     if (var == NULL){
         throw std::runtime_error("Invalid input (parse_let, parse_var).");
     }
@@ -193,11 +194,11 @@ Expr *parse_let(std::istream &in){
 }
 
 
-Expr *parse_if(std::istream &in){
+PTR(Expr) parse_if(std::istream &in){
     // _if <expr> _then <expr> _else <expr>
-    Expr *test_part;
-    Expr *then_part;
-    Expr *else_part;
+    PTR(Expr) test_part;
+    PTR(Expr) then_part;
+    PTR(Expr) else_part;
     
     // parse test_part
     skip_whitespace(in);
@@ -229,10 +230,10 @@ Expr *parse_if(std::istream &in){
 }
 
 
-Expr *parse_fun(std::istream &in){
+PTR(Expr) parse_fun(std::istream &in){
     // fun (var) = <expr>
-    VarExpr* formal_arg;
-    Expr* body;
+    PTR(VarExpr) formal_arg;
+    PTR(Expr) body;
     
     // parse var (function name)
     skip_whitespace(in);
@@ -240,7 +241,7 @@ Expr *parse_fun(std::istream &in){
     if (c == '('){
         consume(in, c);
         skip_whitespace(in);
-        formal_arg = dynamic_cast<VarExpr*>(parse_var(in));
+        formal_arg = dynamic_cast<PTR(VarExpr)>(parse_var(in));
         if (formal_arg == NULL){
             throw std::runtime_error("Invalid input (parse_fun).");
         }
@@ -284,10 +285,10 @@ Expr *parse_fun(std::istream &in){
              | _fun ( 〈variable〉 ) 〈expr〉
  */
 
-Expr *parse_expr(std::istream &in){
+PTR(Expr) parse_expr(std::istream &in){
     skip_whitespace(in);
     // try to parse a comparg
-    Expr *comparg = parse_comparg(in);
+    PTR(Expr) comparg = parse_comparg(in);
     skip_whitespace(in);
     
     // check if there is an '='
@@ -297,7 +298,7 @@ Expr *parse_expr(std::istream &in){
         std::string keyword = get_keyword(in);
         if (keyword == "=="){
             skip_whitespace(in);
-            Expr *e = parse_expr(in);
+            PTR(Expr) e = parse_expr(in);
             return new EqualExpr(comparg, e);
         }
         else{
@@ -308,10 +309,10 @@ Expr *parse_expr(std::istream &in){
 }
 
 
-Expr *parse_comparg(std::istream &in){
+PTR(Expr) parse_comparg(std::istream &in){
     skip_whitespace(in);
     // try to parse an addend
-    Expr *addend = parse_addend(in);
+    PTR(Expr) addend = parse_addend(in);
     skip_whitespace(in);
     
     // check if there is a '+'
@@ -320,7 +321,7 @@ Expr *parse_comparg(std::istream &in){
     if (c == '+'){
         consume(in, c);
         skip_whitespace(in);
-        Expr *comparg = parse_comparg(in);
+        PTR(Expr) comparg = parse_comparg(in);
         return new AddExpr(addend, comparg);
     }
     else {
@@ -329,10 +330,10 @@ Expr *parse_comparg(std::istream &in){
 }
 
 
-Expr *parse_addend(std::istream &in){
+PTR(Expr) parse_addend(std::istream &in){
     skip_whitespace(in);
     // try to parse a multicand
-    Expr *multicand = parse_multicand(in);
+    PTR(Expr) multicand = parse_multicand(in);
     skip_whitespace(in);
     
     // check if there is a '*'
@@ -341,7 +342,7 @@ Expr *parse_addend(std::istream &in){
     if (c == '*') {
         consume(in, c);
         skip_whitespace(in);
-        Expr *addend = parse_addend(in);
+        PTR(Expr) addend = parse_addend(in);
         return new MultExpr(multicand, addend);
     }
     else {
@@ -350,12 +351,12 @@ Expr *parse_addend(std::istream &in){
 }
 
 
-Expr *parse_multicand(std::istream &in){
+PTR(Expr) parse_multicand(std::istream &in){
     skip_whitespace(in);
     // try to parse an inner
-    Expr* e = parse_inner(in);
+    PTR(Expr) e = parse_inner(in);
     
-    Expr* actual_arg;
+    PTR(Expr) actual_arg;
     skip_whitespace(in);
     
     while (in.peek() == '(') {
@@ -372,7 +373,7 @@ Expr *parse_multicand(std::istream &in){
 }
 
 
-Expr *parse_inner(std::istream &in) {
+PTR(Expr) parse_inner(std::istream &in) {
     skip_whitespace(in);
     int check = in.peek();
     // if is an NumExpr
@@ -387,7 +388,7 @@ Expr *parse_inner(std::istream &in) {
     else if (check == '('){
         consume(in, '(');
         skip_whitespace(in);
-        Expr *e = parse_expr(in);
+        PTR(Expr) e = parse_expr(in);
         skip_whitespace(in);
         // check if a closing paranthesis is missing
         int c = in.peek();

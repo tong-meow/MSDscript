@@ -1,9 +1,9 @@
 OBJS = main.o cmdline.o expr.o parse.o val.o tests.o
-INCS = cmdline.hpp expr.hpp catch.hpp parse.hpp val.hpp tests.hpp
+INCS = cmdline.hpp expr.hpp catch.hpp parse.hpp val.hpp tests.hpp pointer.hpp
 CXXFLAGS = --std=c++14 -O2
 
 test_OBJS = testDriver.o testGeneration.o exec.o parse.o val.o expr.o
-test_INCS = testGeneration.hpp exec.hpp parse.hpp val.hpp expr.hpp
+test_INCS = testGeneration.hpp exec.hpp parse.hpp val.hpp expr.hpp pointer.hpp
 
 msdscript: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o msdscript $(OBJS)

@@ -72,7 +72,7 @@ void use_arguments(int argc, char **argv){
             while(true){
                 try {
                     // parse the std::cin
-                    Expr *expr = parse_stream(std::cin);
+                    PTR(Expr) expr = parse_stream(std::cin);
                     // interp the std::cin
                     std::string result = (expr -> interp()) -> to_string();
                     // print out result
@@ -90,7 +90,7 @@ void use_arguments(int argc, char **argv){
             while(true){
                 try{
                     // parse the std::cin
-                    Expr *expr = parse_expr(std::cin);
+                    PTR(Expr) expr = parse_expr(std::cin);
                     // print the std::cin
                     expr -> print(std::cout);
                     std::cout << "\n";
@@ -107,7 +107,7 @@ void use_arguments(int argc, char **argv){
             while(true){
                 try{
                     // parse the std::cin
-                    Expr *expr = parse_expr(std::cin);
+                    PTR(Expr) expr = parse_expr(std::cin);
                     // print the std::cin
                     std::string result = expr -> to_pretty_string();
                     std::cout << result << "\n";

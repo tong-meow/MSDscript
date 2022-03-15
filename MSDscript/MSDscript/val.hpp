@@ -5,11 +5,11 @@
 //  Created by Tong Shen on 2/16/22.
 //
 
-#ifndef val_hpp
-#define val_hpp
-
 #include <stdio.h>
 #include <string>
+#include "pointer.hpp"
+#ifndef value_hpp
+#define value_hpp
 
 class Expr;
 
@@ -17,12 +17,12 @@ class Expr;
 class Val {
 public:
     
-    virtual bool equals(Val* v) = 0;
-    virtual Expr* to_expr() = 0;
+    virtual bool equals(PTR(Val) v) = 0;
+    virtual PTR(Expr) to_expr() = 0;
     virtual std::string to_string() = 0;
-    virtual Val* add_to(Val* v) = 0;
-    virtual Val* mult_by(Val* v) = 0;
-    virtual Val* call(Val* arg) = 0;
+    virtual PTR(Val) add_to(PTR(Val) v) = 0;
+    virtual PTR(Val) mult_by(PTR(Val) v) = 0;
+    virtual PTR(Val) call(PTR(Val) arg) = 0;
     
 };
 
@@ -34,12 +34,12 @@ public:
     
     NumVal(int rep);
     
-    virtual bool equals(Val *v);
-    virtual Expr* to_expr();
+    virtual bool equals(PTR(Val) v);
+    virtual PTR(Expr) to_expr();
     virtual std::string to_string();
-    virtual Val* add_to(Val* v);
-    virtual Val* mult_by(Val* v);
-    virtual Val* call(Val* arg);
+    virtual PTR(Val) add_to(PTR(Val) v);
+    virtual PTR(Val) mult_by(PTR(Val) v);
+    virtual PTR(Val) call(PTR(Val) arg);
 };
 
 
@@ -50,12 +50,12 @@ public:
     
     BoolVal(bool rep);
     
-    virtual bool equals(Val *v);
-    virtual Expr* to_expr();
+    virtual bool equals(PTR(Val) v);
+    virtual PTR(Expr) to_expr();
     virtual std::string to_string();
-    virtual Val* add_to(Val* v);
-    virtual Val* mult_by(Val* v);
-    virtual Val* call(Val* arg);
+    virtual PTR(Val) add_to(PTR(Val) v);
+    virtual PTR(Val) mult_by(PTR(Val) v);
+    virtual PTR(Val) call(PTR(Val) arg);
 };
 
 
@@ -63,16 +63,16 @@ public:
 class FunVal: public Val {
 public:
     std::string formal_arg;
-    Expr* body;
+    PTR(Expr) body;
 
-    FunVal(std::string formal_arg, Expr* body);
+    FunVal(std::string formal_arg, PTR(Expr) body);
     
-    virtual bool equals(Val *v);
-    virtual Expr* to_expr();
+    virtual bool equals(PTR(Val) v);
+    virtual PTR(Expr) to_expr();
     virtual std::string to_string();
-    virtual Val* add_to(Val* v);
-    virtual Val* mult_by(Val* v);
-    virtual Val* call(Val* arg);
+    virtual PTR(Val) add_to(PTR(Val) v);
+    virtual PTR(Val) mult_by(PTR(Val) v);
+    virtual PTR(Val) call(PTR(Val) arg);
 };
 
 
