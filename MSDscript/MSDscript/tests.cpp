@@ -11,6 +11,7 @@
 #include "parse.hpp"
 #include "val.hpp"
 #include "tests.hpp"
+#include "pointer.hpp"
 
 // EQUAL TESTS
 
@@ -23,7 +24,7 @@ TEST_CASE("Expr Equals"){
     }
 
     SECTION("Add Equals"){
-        Expr *test = new AddExpr(new NumExpr(2), new NumExpr(5));
+        PTR(Expr) test = new AddExpr(new NumExpr(2), new NumExpr(5));
         CHECK(test-> equals(new AddExpr(new NumExpr(2), new NumExpr(5))) == true);
         CHECK(test-> equals(new AddExpr(new NumExpr(5), new NumExpr(2))) == false);
         CHECK(test-> equals(new AddExpr(new NumExpr(4), new NumExpr(10))) == false);
@@ -31,7 +32,7 @@ TEST_CASE("Expr Equals"){
     }
 
     SECTION("Mult Equals"){
-        Expr *test = new MultExpr(new NumExpr(3), new NumExpr(6));
+        PTR(Expr) test = new MultExpr(new NumExpr(3), new NumExpr(6));
         CHECK(test-> equals(new MultExpr(new NumExpr(3), new NumExpr(6))) == true);
         CHECK(test-> equals(new MultExpr(new NumExpr(6), new NumExpr(3))) == false);
         CHECK(test-> equals(new MultExpr(new NumExpr(1), new NumExpr(2))) == false);
@@ -39,7 +40,7 @@ TEST_CASE("Expr Equals"){
     }
     
     SECTION("Var Equals"){
-        Expr *test = new VarExpr("Happy2022");
+        PTR(Expr) test = new VarExpr("Happy2022");
         CHECK(test-> equals(new VarExpr("Happy2022")) == true);
         CHECK(test-> equals(new VarExpr("PlayStation")) == false);
         CHECK(test-> equals(new VarExpr("XBox")) == false);
@@ -49,21 +50,21 @@ TEST_CASE("Expr Equals"){
     SECTION("Let Equals"){
         // _let x = 5;
         // _in x + 1;
-        LetExpr *test = new LetExpr(new VarExpr("x"), new NumExpr(5), new AddExpr(new VarExpr("x"), new NumExpr(1)));
+        PTR(LetExpr) test = new LetExpr(new VarExpr("x"), new NumExpr(5), new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK(test-> equals(new LetExpr(new VarExpr("x"), new NumExpr(5), new AddExpr(new VarExpr("x"), new NumExpr(1)))) == true);
         CHECK(test-> equals(new LetExpr(new VarExpr("y"), new NumExpr(5), new AddExpr(new VarExpr("y"), new NumExpr(1)))) == false);
         CHECK(test-> equals(new NumExpr(6)) == false);
     }
 
     SECTION("Bool Equals"){
-        Expr *test = new BoolExpr(true);
+        PTR(Expr) test = new BoolExpr(true);
         CHECK((test -> equals(new BoolExpr(true))) == true);
         CHECK((test -> equals(new BoolExpr(false))) == false);
         CHECK((test -> equals(new NumExpr(3))) == false);
     }
 
     SECTION("Equal Equals"){
-        Expr *test = new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
+        PTR(Expr) test = new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
         CHECK((test -> equals(new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2))))) == true);
         CHECK((test -> equals(new EqualExpr(new NumExpr(2), new NumExpr(3)))) == false);
         CHECK((test -> equals(new NumExpr(3))) == false);
@@ -73,7 +74,7 @@ TEST_CASE("Expr Equals"){
         // _if 0 == -1 + 1
         // _then 1
         // _else 0
-        Expr *test = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new NumExpr(1), new NumExpr(0));
         CHECK((test -> equals(new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                          new NumExpr(1), new NumExpr(0)))) == true);
@@ -82,13 +83,13 @@ TEST_CASE("Expr Equals"){
     
     SECTION("Fun Equals"){
         // _fun (x) x + 2
-        Expr *test = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
         CHECK(test -> equals(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)))));
         CHECK(test -> equals(new FunExpr("x", new AddExpr(new NumExpr(2), new VarExpr("x")))) == false);
     }
     
     SECTION("Call Equals"){
-        Expr *test = new CallExpr(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2))), new NumExpr(2));
+        PTR(Expr) test = new CallExpr(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2))), new NumExpr(2));
         CHECK(test -> equals(new CallExpr(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2))),
                                           new NumExpr(2))));
         CHECK(test -> equals(new CallExpr(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2))),
@@ -103,13 +104,13 @@ TEST_CASE("Expr Equals"){
 
 TEST_CASE("Expr Interp"){
     SECTION("Num Interp"){
-        Expr *test = new NumExpr(42);
+        PTR(Expr) test = new NumExpr(42);
         CHECK( (test-> interp()) -> equals (new NumVal(42)));
     }
 
     SECTION("Add Interp"){
         // test == 1 + 2 + 3 == 6
-        Expr *test = new AddExpr(new AddExpr(new NumExpr(1), new NumExpr(2)), new NumExpr(3));
+        PTR(Expr) test = new AddExpr(new AddExpr(new NumExpr(1), new NumExpr(2)), new NumExpr(3));
         // test == 6
         CHECK( (test-> interp()) -> equals (new NumVal(6)));
         // throws exception
@@ -119,7 +120,7 @@ TEST_CASE("Expr Interp"){
 
     SECTION("Mult Interp"){
         // test == 1 * 2 * 3 == 6
-        Expr *test = new MultExpr(new MultExpr(new NumExpr(1), new NumExpr(2)), new NumExpr(3));
+        PTR(Expr) test = new MultExpr(new MultExpr(new NumExpr(1), new NumExpr(2)), new NumExpr(3));
         // test == 6
         CHECK( (test-> interp()) -> equals (new NumVal(6)));
         // throws exception
@@ -129,7 +130,7 @@ TEST_CASE("Expr Interp"){
 
     SECTION("Var Interp"){
         // test = "owls"
-        Expr *test = new VarExpr("owls");
+        PTR(Expr) test = new VarExpr("owls");
         // throws exception
         CHECK_THROWS_WITH(test -> interp(), "Expr contains a string element.");
     }
@@ -138,19 +139,19 @@ TEST_CASE("Expr Interp"){
         // test1 =
         //        _let x = 5;
         //        _in 6;
-        Expr *test1 = new LetExpr(new VarExpr("x"), new NumExpr(5), new NumExpr(6));
+        PTR(Expr) test1 = new LetExpr(new VarExpr("x"), new NumExpr(5), new NumExpr(6));
         CHECK( (test1 -> interp()) -> equals (new NumVal(6)));
         // test2 =
         //        _let x = 5;
         //        _in x + 1;
-        Expr *test2 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test2 = new LetExpr(new VarExpr("x"),
                                new NumExpr(5),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK((test2 -> interp()) -> equals (new NumVal(6)));
         // test3 =
         //        _let x = 5;
         //        _in y + 1;
-        Expr *test3 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test3 = new LetExpr(new VarExpr("x"),
                                new NumExpr(5),
                                new AddExpr(new VarExpr("y"), new NumExpr(1)));
         CHECK_THROWS_WITH( test3 -> interp(),
@@ -159,7 +160,7 @@ TEST_CASE("Expr Interp"){
         //        _let x = 5;
         //        _in _let x = 3;
         //            _in x + 1;
-        Expr *test4 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test4 = new LetExpr(new VarExpr("x"),
                                new NumExpr(5),
                                new LetExpr(new VarExpr("x"),
                                         new NumExpr(3),
@@ -169,7 +170,7 @@ TEST_CASE("Expr Interp"){
         //        _let x = 5;
         //        _in _let y = 3;
         //            _in x + 1;
-        Expr *test5 = new LetExpr(new VarExpr("x"), new NumExpr(5),
+        PTR(Expr) test5 = new LetExpr(new VarExpr("x"), new NumExpr(5),
                                new LetExpr(new VarExpr("y"),
                                         new NumExpr(3),
                                         new AddExpr(new VarExpr("x"), new NumExpr(1))));
@@ -178,7 +179,7 @@ TEST_CASE("Expr Interp"){
         //        _let x = 5;
         //        _in _let x = x + 1;
         //            _in x + 1;
-        Expr *test6 = new LetExpr(new VarExpr("x"), new NumExpr(5),
+        PTR(Expr) test6 = new LetExpr(new VarExpr("x"), new NumExpr(5),
                                new LetExpr(new VarExpr("x"),
                                         new AddExpr(new VarExpr("x"), new NumExpr(1)),
                                         new AddExpr(new VarExpr("x"), new NumExpr(1))));
@@ -186,7 +187,7 @@ TEST_CASE("Expr Interp"){
         // test7 =
         //        _let x = x + 1;
         //        _in x + 1;
-        Expr *test7 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test7 = new LetExpr(new VarExpr("x"),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK_THROWS_WITH( test7 -> interp(),
@@ -195,7 +196,7 @@ TEST_CASE("Expr Interp"){
         //        _let x = _let x = 3
         //                 _in x + 1
         //        _in x + 1
-        Expr *test8 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test8 = new LetExpr(new VarExpr("x"),
                                new LetExpr(new VarExpr("x"), new NumExpr(3),
                                         new AddExpr(new VarExpr("x"), new NumExpr(1))),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
@@ -203,16 +204,16 @@ TEST_CASE("Expr Interp"){
     }
 
     SECTION("BoolExpr Interp"){
-        Expr *test = new BoolExpr(false);
+        PTR(Expr) test = new BoolExpr(false);
         CHECK(test -> interp() -> equals(new BoolVal(false)));
         CHECK(test -> interp() -> equals(new BoolVal(true)) == false);
     }
 
     SECTION("EqualExpr Interp"){
-        Expr *test1 = new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
+        PTR(Expr) test1 = new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
         CHECK((test1 -> interp()) -> equals(new BoolVal(true)) == true);
         CHECK((test1 -> interp()) -> equals(new BoolVal(false)) == false);
-        Expr *test2 = new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(-2)));
+        PTR(Expr) test2 = new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(-2)));
         CHECK((test2 -> interp()) -> equals(new BoolVal(false)) == true);
         CHECK((test2 -> interp()) -> equals(new BoolVal(true)) == false);
     }
@@ -221,33 +222,33 @@ TEST_CASE("Expr Interp"){
         // _if 0 == -1 + 1
         // _then 1
         // _else 0
-        Expr *test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new NumExpr(1), new NumExpr(0));
         CHECK((test1 -> interp()) -> equals(new NumVal(1)) == true);
         CHECK((test1 -> interp()) -> equals(new NumVal(0)) == false);
         // _if 1 == -1 + 1
         // _then 1
         // _else 0
-        Expr *test2 = new IfExpr(new EqualExpr(new NumExpr(1), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test2 = new IfExpr(new EqualExpr(new NumExpr(1), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new NumExpr(1), new NumExpr(0));
         CHECK((test2 -> interp()) -> equals(new NumVal(1)) == false);
         CHECK((test2 -> interp()) -> equals(new NumVal(0)) == true);
         // if 4
         // _then 1
         // _else 0
-        Expr *test3 = new IfExpr(new NumExpr(4),new NumExpr(1), new NumExpr(0));
+        PTR(Expr) test3 = new IfExpr(new NumExpr(4),new NumExpr(1), new NumExpr(0));
         CHECK_THROWS_WITH(test3 -> interp(), "Error: IfExpr's condition is not a boolean value.");
     }
     
     SECTION("FunExpr Interp"){
-        Expr *test = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
         CHECK((test -> interp()) -> equals(new FunVal("x", new AddExpr(new VarExpr("x"), new NumExpr(2)))));
         CHECK((test -> interp()) -> equals(new FunVal("y", new AddExpr(new VarExpr("y"), new NumExpr(2)))) == false);
     }
     
     SECTION("CallExpr Interp"){
-        Expr *fun = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
-        Expr *test = new CallExpr(fun, new NumExpr(2));
+        PTR(Expr) fun = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test = new CallExpr(fun, new NumExpr(2));
         CHECK((test -> interp()) -> equals((fun -> interp()) -> call((new NumExpr(2)) -> interp())));
     }
 }
@@ -260,16 +261,16 @@ TEST_CASE("Expr Has Variable"){
     }
 
     SECTION("Add Has Variable"){
-        Expr *test1 = new AddExpr(new AddExpr(new NumExpr(1), new NumExpr(1)), new NumExpr(1));
+        PTR(Expr) test1 = new AddExpr(new AddExpr(new NumExpr(1), new NumExpr(1)), new NumExpr(1));
         CHECK((test1 -> has_variable()) == false);
-        Expr *test2 = new AddExpr(new AddExpr(new NumExpr(1), new VarExpr("owls")), new NumExpr(1));
+        PTR(Expr) test2 = new AddExpr(new AddExpr(new NumExpr(1), new VarExpr("owls")), new NumExpr(1));
         CHECK((test2 -> has_variable()) == true);
     }
 
     SECTION("Mult Has Variable"){
-        Expr *test1 = new MultExpr(new AddExpr(new NumExpr(1), new NumExpr(1)), new NumExpr(1));
+        PTR(Expr) test1 = new MultExpr(new AddExpr(new NumExpr(1), new NumExpr(1)), new NumExpr(1));
         CHECK((test1 -> has_variable()) == false);
-        Expr *test2 = new MultExpr(new MultExpr(new NumExpr(1), new VarExpr("owls")), new NumExpr(1));
+        PTR(Expr) test2 = new MultExpr(new MultExpr(new NumExpr(1), new VarExpr("owls")), new NumExpr(1));
         CHECK((test2 -> has_variable()) == true);
     }
 
@@ -281,40 +282,40 @@ TEST_CASE("Expr Has Variable"){
         // test1 =
         //          _let x = 5;
         //          _in 6;
-        Expr *test1 = new LetExpr(new VarExpr("x"), new NumExpr(5), new NumExpr(6));
+        PTR(Expr) test1 = new LetExpr(new VarExpr("x"), new NumExpr(5), new NumExpr(6));
         CHECK(test1 -> has_variable() == false);
         // test2 =
         //          _let x = x + 1;
         //          _in 6;
-        Expr *test2 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test2 = new LetExpr(new VarExpr("x"),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)),
                                new NumExpr(6));
         CHECK(test2 -> has_variable() == true);
         // test3 =
         //          _let x = 5;
         //          _in x + 1;
-        Expr *test3 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test3 = new LetExpr(new VarExpr("x"),
                                new NumExpr(5),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK(test3 -> has_variable() == true);
         // test4 =
         //          _let x = x + 1;
         //          _in x + 1;
-        Expr *test4 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test4 = new LetExpr(new VarExpr("x"),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK(test4 -> has_variable() == true);
     }
 
     SECTION("BoolExpr Has Variable"){
-        Expr *test = new BoolExpr(true);
+        PTR(Expr) test = new BoolExpr(true);
         CHECK(test -> has_variable() == false);
     }
 
     SECTION("EqualExpr Has Variable"){
-        Expr *test1 = new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
+        PTR(Expr) test1 = new EqualExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
         CHECK(test1 -> has_variable() == false);
-        Expr *test2 = new EqualExpr(new NumExpr(3), new AddExpr(new VarExpr("1"), new NumExpr(2)));
+        PTR(Expr) test2 = new EqualExpr(new NumExpr(3), new AddExpr(new VarExpr("1"), new NumExpr(2)));
         CHECK(test2 -> has_variable() == true);
     }
 
@@ -322,32 +323,32 @@ TEST_CASE("Expr Has Variable"){
         // _if 0 == -1 + 1
         // _then 1
         // _else 0
-        Expr *test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new NumExpr(1), new NumExpr(0));
         CHECK((test1 -> has_variable()) == false);
         // _if 1 == -1 + 1
         // _then good
         // _else bad
-        Expr *test2 = new IfExpr(new EqualExpr(new NumExpr(1), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test2 = new IfExpr(new EqualExpr(new NumExpr(1), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new VarExpr("good"), new VarExpr("bad"));
         CHECK((test2 -> has_variable()) == true);
     }
     
     SECTION("FunExpr Has Variable"){
-        Expr *test1 = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test1 = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
         CHECK(test1 -> has_variable() == true);
         
-        Expr *test2 = new FunExpr("x", new AddExpr(new NumExpr(1), new NumExpr(2)));
+        PTR(Expr) test2 = new FunExpr("x", new AddExpr(new NumExpr(1), new NumExpr(2)));
         CHECK(test2 -> has_variable() == false);
     }
     
     SECTION("CallExpr Has Variable"){
-        Expr *fun1 = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
-        Expr *test1 = new CallExpr(fun1, new NumExpr(2));
+        PTR(Expr) fun1 = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test1 = new CallExpr(fun1, new NumExpr(2));
         CHECK(test1 -> has_variable() == true);
         
-        Expr *fun2 = new FunExpr("x", new AddExpr(new NumExpr(-2), new NumExpr(2)));
-        Expr *test2 = new CallExpr(fun2, new NumExpr(2));
+        PTR(Expr) fun2 = new FunExpr("x", new AddExpr(new NumExpr(-2), new NumExpr(2)));
+        PTR(Expr) test2 = new CallExpr(fun2, new NumExpr(2));
         CHECK(test2 -> has_variable() == false);
     }
 }
@@ -363,31 +364,31 @@ TEST_CASE("Expr Subst"){
 
     SECTION("Add Subst"){
         // test1 contains no string
-        Expr *test1 = new AddExpr(new NumExpr(3), new MultExpr(new NumExpr(1), new NumExpr(5)));
+        PTR(Expr) test1 = new AddExpr(new NumExpr(3), new MultExpr(new NumExpr(1), new NumExpr(5)));
         CHECK(((test1 -> subst("owls", new VarExpr("snowy owls"))) ->equals(test1)));
         
         // test2 contains target string
-        Expr *test2 = new AddExpr(new NumExpr(3), new MultExpr(new VarExpr("owls"), new NumExpr(5)));
+        PTR(Expr) test2 = new AddExpr(new NumExpr(3), new MultExpr(new VarExpr("owls"), new NumExpr(5)));
         CHECK(((test2 -> subst("owls", new VarExpr("snowy owls"))) ->equals(
            new AddExpr(new NumExpr(3), new MultExpr(new VarExpr("snowy owls"), new NumExpr(5))))));
         
         // test3 contains string but != target
-        Expr *test3 = new AddExpr(new NumExpr(3), new MultExpr(new VarExpr("barn owls"), new NumExpr(5)));
+        PTR(Expr) test3 = new AddExpr(new NumExpr(3), new MultExpr(new VarExpr("barn owls"), new NumExpr(5)));
         CHECK(((test3 -> subst("owls", new VarExpr("snowy owls"))) -> equals(test3)));
     }
 
     SECTION("Mult Subst"){
         // test1 contains no string
-        Expr *test1 = new MultExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(5)));
+        PTR(Expr) test1 = new MultExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(5)));
         CHECK(((test1 -> subst("owls", new VarExpr("snowy owls"))) ->equals(test1)));
         
         // test2 contains target string
-        Expr *test2 = new MultExpr(new NumExpr(3), new AddExpr(new VarExpr("owls"), new NumExpr(5)));
+        PTR(Expr) test2 = new MultExpr(new NumExpr(3), new AddExpr(new VarExpr("owls"), new NumExpr(5)));
         CHECK(((test2 -> subst("owls", new VarExpr("snowy owls"))) ->equals(
            new MultExpr(new NumExpr(3), new AddExpr(new VarExpr("snowy owls"), new NumExpr(5))))));
         
         // test3 contains string but != target
-        Expr *test3 = new MultExpr(new NumExpr(3), new MultExpr(new VarExpr("barn owls"), new NumExpr(5)));
+        PTR(Expr) test3 = new MultExpr(new NumExpr(3), new MultExpr(new VarExpr("barn owls"), new NumExpr(5)));
         CHECK(((test3 -> subst("owls", new VarExpr("snowy owls"))) -> equals(test3)));
     }
 
@@ -402,12 +403,12 @@ TEST_CASE("Expr Subst"){
         // test1 =
         //          _let x = 5;
         //          _in 6;          -> subst ("x", 1)
-        Expr *test1 = new LetExpr(new VarExpr("x"), new NumExpr(5), new NumExpr(6));
+        PTR(Expr) test1 = new LetExpr(new VarExpr("x"), new NumExpr(5), new NumExpr(6));
         CHECK((test1 -> subst("x", new NumExpr(1))) -> equals(test1));
         // test2 =
         //          _let x = x + 1;
         //          _in x + 1;          -> subst ("x", 5)
-        Expr *test2 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test2 = new LetExpr(new VarExpr("x"),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK(test2 -> subst("x", new NumExpr(5)) -> equals(
@@ -417,7 +418,7 @@ TEST_CASE("Expr Subst"){
         // test3 =
         //          _let x = x + 1;
         //          _in x + 1;          -> subst ("y", 5)
-        Expr *test3 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test3 = new LetExpr(new VarExpr("x"),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK(test3 -> subst("y", new NumExpr(5)) -> equals(test3));
@@ -429,7 +430,7 @@ TEST_CASE("Expr Subst"){
     }
 
     SECTION("EqualExpr Subst"){
-        Expr *test = new EqualExpr(new VarExpr("grade"), new VarExpr("finalGPA"));
+        PTR(Expr) test = new EqualExpr(new VarExpr("grade"), new VarExpr("finalGPA"));
         CHECK((test -> subst("finalGPA", new NumExpr(4))) -> equals
               (new EqualExpr(new VarExpr("grade"), new NumExpr(4))) == true);
         CHECK((test -> subst("finalGPA", new NumExpr(4))) -> equals
@@ -440,27 +441,27 @@ TEST_CASE("Expr Subst"){
         // _if 0 == -1 + 1
         // _then 1
         // _else 0
-        Expr *test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new NumExpr(1), new NumExpr(0));
         CHECK((test1 -> subst("good", new NumExpr(42))) -> equals(test1) == true);
         // _if 0 == -1 + 1
         // _then good
         // _else 0
-        Expr *test2 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test2 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new VarExpr("good"), new NumExpr(0));
         CHECK((test2 -> subst("good", new NumExpr(1))) -> equals(test1) == true);
     }
     
     SECTION("FunExpr Subst"){
-        Expr *test = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
         CHECK((test -> subst("x", new NumExpr(3))) -> equals (new FunExpr("x",
                                                                           new AddExpr(new NumExpr(3), new NumExpr(2)))));
         CHECK((test -> subst("y", new NumExpr(3))) -> equals (test));
     }
     
     SECTION("CallExpr Subst"){
-        Expr *fun = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
-        Expr *test = new CallExpr(fun, new NumExpr(2));
+        PTR(Expr) fun = new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test = new CallExpr(fun, new NumExpr(2));
         CHECK(test -> subst("x", new NumExpr(3)) -> equals
               (new CallExpr(new FunExpr("x",
                                         new AddExpr(new NumExpr(3), new NumExpr(2))),
@@ -473,26 +474,26 @@ TEST_CASE("Expr Subst"){
 
 TEST_CASE("Expr Print"){
     SECTION("Num Print"){
-        Expr *test1 = new NumExpr(10);
+        PTR(Expr) test1 = new NumExpr(10);
         CHECK((test1 -> to_string()) == "10");
     }
 
     SECTION("Add Print"){
-        Expr *test1 = new AddExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
+        PTR(Expr) test1 = new AddExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
         CHECK((test1 -> to_string()) == "(3+(1+2))");
-        Expr *test2 = new AddExpr(new AddExpr(new NumExpr(3), new NumExpr(1)), new NumExpr(2));
+        PTR(Expr) test2 = new AddExpr(new AddExpr(new NumExpr(3), new NumExpr(1)), new NumExpr(2));
         CHECK((test2 -> to_string()) == "((3+1)+2)");
     }
 
     SECTION("Mult Print"){
-        Expr *test1 = new MultExpr(new NumExpr(3), new MultExpr(new NumExpr(1), new NumExpr(2)));
+        PTR(Expr) test1 = new MultExpr(new NumExpr(3), new MultExpr(new NumExpr(1), new NumExpr(2)));
         CHECK((test1 -> to_string()) == "(3*(1*2))");
-        Expr *test2 = new MultExpr(new MultExpr(new NumExpr(3), new NumExpr(1)), new NumExpr(2));
+        PTR(Expr) test2 = new MultExpr(new MultExpr(new NumExpr(3), new NumExpr(1)), new NumExpr(2));
         CHECK((test2 -> to_string()) == "((3*1)*2)");
     }
 
     SECTION("Variable Print"){
-        Expr *test1 = new VarExpr("X");
+        PTR(Expr) test1 = new VarExpr("X");
         CHECK((test1 -> to_string()) == "X");
     }
 
@@ -500,7 +501,7 @@ TEST_CASE("Expr Print"){
         // test1 =
         //        _let x = 5;
         //        _in x + 1;
-        Expr *test1 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test1 = new LetExpr(new VarExpr("x"),
                                new NumExpr(5),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK((test1 -> to_string()) == "(_let x=5 _in (x+1))");
@@ -508,7 +509,7 @@ TEST_CASE("Expr Print"){
         //        _let x = 5;
         //        _in _let x = 3;
         //            _in x + 1;
-        Expr *test2 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test2 = new LetExpr(new VarExpr("x"),
                                new NumExpr(5),
                                new LetExpr(new VarExpr("x"),
                                         new NumExpr(3),
@@ -517,23 +518,23 @@ TEST_CASE("Expr Print"){
         // test3 =
         //        _let x = x + 1;
         //        _in x + 1;
-        Expr *test3 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test3 = new LetExpr(new VarExpr("x"),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK((test3 -> to_string()) == "(_let x=(x+1) _in (x+1))");
     }
 
     SECTION("boolExpr Print"){
-        Expr *test1 = new BoolExpr(true);
+        PTR(Expr) test1 = new BoolExpr(true);
         CHECK((test1 -> to_string()) == "_true");
-        Expr *test2 = new BoolExpr(false);
+        PTR(Expr) test2 = new BoolExpr(false);
         CHECK((test2 -> to_string()) == "_false");
     }
 
     SECTION("EqualExpr Print"){
-        Expr *test1 = new EqualExpr(new VarExpr("grade"), new NumExpr(99));
+        PTR(Expr) test1 = new EqualExpr(new VarExpr("grade"), new NumExpr(99));
         CHECK((test1 -> to_string()) == "(grade == 99)");
-        Expr *test2 = new EqualExpr(new VarExpr("grade"), new AddExpr(new NumExpr(30), new NumExpr(60)));
+        PTR(Expr) test2 = new EqualExpr(new VarExpr("grade"), new AddExpr(new NumExpr(30), new NumExpr(60)));
         CHECK((test2 -> to_string()) == "(grade == (30+60))");
     }
 
@@ -541,24 +542,24 @@ TEST_CASE("Expr Print"){
         // _if 0 == -1 + 1
         // _then 1
         // _else 0
-        Expr *test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new NumExpr(1), new NumExpr(0));
         CHECK((test1 -> to_string()) == "(_if ((0 == (-1+1))) _then (1) _else (0))");
         // if good
         // _then 1
         // _else 0
-        Expr *test2 = new IfExpr(new VarExpr("good"),new NumExpr(1), new NumExpr(0));
+        PTR(Expr) test2 = new IfExpr(new VarExpr("good"),new NumExpr(1), new NumExpr(0));
         CHECK((test2 -> to_string()) == "(_if (good) _then (1) _else (0))");
     }
     
     SECTION("FunExpr Print"){
-        Expr *test = new FunExpr("testFun", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test = new FunExpr("testFun", new AddExpr(new VarExpr("x"), new NumExpr(2)));
         CHECK(test -> to_string() == "(_fun (testFun) (x+2))");
     }
     
     SECTION("CallExpr Print"){
-        Expr *fun = new FunExpr("testFun", new AddExpr(new VarExpr("x"), new NumExpr(2)));
-        Expr *test = new CallExpr(fun, new NumExpr(2));
+        PTR(Expr) fun = new FunExpr("testFun", new AddExpr(new VarExpr("x"), new NumExpr(2)));
+        PTR(Expr) test = new CallExpr(fun, new NumExpr(2));
         CHECK(test -> to_string() == "(_fun (testFun) (x+2))(2)");
     }
 }
@@ -567,44 +568,44 @@ TEST_CASE("Expr Print"){
 
 TEST_CASE("Expr Pretty Print"){
     SECTION("Num Pretty Print"){
-        Expr *test1 = new NumExpr(10);
+        PTR(Expr) test1 = new NumExpr(10);
         CHECK((test1 -> to_pretty_string()) == "10");
     }
 
     SECTION("Add Pretty Print"){
-        Expr *test1 = new AddExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
+        PTR(Expr) test1 = new AddExpr(new NumExpr(3), new AddExpr(new NumExpr(1), new NumExpr(2)));
         CHECK((test1 -> to_pretty_string()) == "3 + 1 + 2");
-        Expr *test2 = new AddExpr(new AddExpr(new NumExpr(3), new NumExpr(1)), new NumExpr(2));
+        PTR(Expr) test2 = new AddExpr(new AddExpr(new NumExpr(3), new NumExpr(1)), new NumExpr(2));
         CHECK((test2 -> to_pretty_string()) == "(3 + 1) + 2");
     }
 
     SECTION("Mult Pretty Print"){
-        Expr *test1 = new MultExpr(new NumExpr(3), new MultExpr(new NumExpr(1), new NumExpr(2)));
+        PTR(Expr) test1 = new MultExpr(new NumExpr(3), new MultExpr(new NumExpr(1), new NumExpr(2)));
         CHECK((test1 -> to_pretty_string()) == "3 * 1 * 2");
-        Expr *test2 = new MultExpr(new MultExpr(new NumExpr(3), new NumExpr(1)), new NumExpr(2));
+        PTR(Expr) test2 = new MultExpr(new MultExpr(new NumExpr(3), new NumExpr(1)), new NumExpr(2));
         CHECK((test2 -> to_pretty_string()) == "(3 * 1) * 2");
     }
 
     SECTION("Add and Mult Mixed Pretty Print"){
         // 1 + 2 * 3
-        Expr *test1 = new AddExpr(new NumExpr(1), new MultExpr(new NumExpr(2), new NumExpr(3)));
+        PTR(Expr) test1 = new AddExpr(new NumExpr(1), new MultExpr(new NumExpr(2), new NumExpr(3)));
         CHECK((test1 -> to_pretty_string()) == "1 + 2 * 3");
         // 1 * (2 + 3)
-        Expr *test2 = new MultExpr(new NumExpr(1), new AddExpr(new NumExpr(2), new NumExpr(3)));
+        PTR(Expr) test2 = new MultExpr(new NumExpr(1), new AddExpr(new NumExpr(2), new NumExpr(3)));
         CHECK((test2 -> to_pretty_string()) == "1 * (2 + 3)");
         // 1 * (2 + 3) * 4
-        Expr *test3 = new MultExpr(new NumExpr(1), new MultExpr(new AddExpr(new NumExpr(2), new NumExpr(3)), new NumExpr(4)));
+        PTR(Expr) test3 = new MultExpr(new NumExpr(1), new MultExpr(new AddExpr(new NumExpr(2), new NumExpr(3)), new NumExpr(4)));
         CHECK((test3 -> to_pretty_string()) == "1 * (2 + 3) * 4");
         // (1 + 2) * (3 + 4)
-        Expr *test4 = new MultExpr(new AddExpr(new NumExpr(1), new NumExpr(2)), new AddExpr(new NumExpr(3), new NumExpr(4)));
+        PTR(Expr) test4 = new MultExpr(new AddExpr(new NumExpr(1), new NumExpr(2)), new AddExpr(new NumExpr(3), new NumExpr(4)));
         CHECK((test4 -> to_pretty_string()) == "(1 + 2) * (3 + 4)");
         // (1 * (2 + 3)) * 4
-        Expr *test5 = new MultExpr(new MultExpr(new NumExpr(1), new AddExpr(new NumExpr(2), new NumExpr(3))), new NumExpr(4));
+        PTR(Expr) test5 = new MultExpr(new MultExpr(new NumExpr(1), new AddExpr(new NumExpr(2), new NumExpr(3))), new NumExpr(4));
         CHECK((test5 -> to_pretty_string()) == "(1 * (2 + 3)) * 4");
     }
 
     SECTION("Var Pretty Print"){
-        Expr *test1 = new VarExpr("Y");
+        PTR(Expr) test1 = new VarExpr("Y");
         CHECK((test1 -> to_pretty_string()) == "Y");
     }
 
@@ -612,20 +613,20 @@ TEST_CASE("Expr Pretty Print"){
         // test1 =
         //        _let x = 5
         //        _in x + 1
-        Expr *test1 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test1 = new LetExpr(new VarExpr("x"),
                                new NumExpr(5),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
         CHECK((test1 -> to_pretty_string()) == "_let x = 5\n_in x + 1");
         // test2 =
         //        (_let x = 5
         //        _in x) + 1
-        Expr *test2 = new AddExpr(new LetExpr(new VarExpr("x"), new NumExpr(5), new VarExpr("x")),
+        PTR(Expr) test2 = new AddExpr(new LetExpr(new VarExpr("x"), new NumExpr(5), new VarExpr("x")),
                               new NumExpr(1));
         CHECK((test2 -> to_pretty_string()) == "(_let x = 5\n _in x) + 1");
         // test3 =
         //        5 * (_let x = 5
         //             _in  x) + 1
-        Expr *test3 = new AddExpr (new MultExpr(new NumExpr(5),
+        PTR(Expr) test3 = new AddExpr (new MultExpr(new NumExpr(5),
                                         new LetExpr(new VarExpr("x"), new NumExpr(5), new VarExpr("x"))),
                                new NumExpr(1));
         CHECK((test3 -> to_pretty_string()) == "5 * (_let x = 5\n"
@@ -633,7 +634,7 @@ TEST_CASE("Expr Pretty Print"){
         // test4 =
         //        5 * _let x = 5
         //            _in  x + 1
-        Expr *test4 = new MultExpr(new NumExpr(5),
+        PTR(Expr) test4 = new MultExpr(new NumExpr(5),
                                new LetExpr(new VarExpr("x"),
                                         new NumExpr(5),
                                         new AddExpr(new VarExpr("x"), new NumExpr(1))));
@@ -643,7 +644,7 @@ TEST_CASE("Expr Pretty Print"){
         //        _let x = 5
         //        _in _let x = 3
         //            _in x + 1
-        Expr *test5 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test5 = new LetExpr(new VarExpr("x"),
                                new NumExpr(5),
                                new LetExpr(new VarExpr("x"), new NumExpr(3),
                                        new AddExpr(new VarExpr("x"), new NumExpr(1))));
@@ -654,7 +655,7 @@ TEST_CASE("Expr Pretty Print"){
         //        _let x = _let x = 3
         //                 _in x + 1
         //        _in x + 1
-        Expr *test6 = new LetExpr(new VarExpr("x"),
+        PTR(Expr) test6 = new LetExpr(new VarExpr("x"),
                                new LetExpr(new VarExpr("x"), new NumExpr(3),
                                         new AddExpr(new VarExpr("x"), new NumExpr(1))),
                                new AddExpr(new VarExpr("x"), new NumExpr(1)));
@@ -665,7 +666,7 @@ TEST_CASE("Expr Pretty Print"){
         //       (5 + (_let x = _let x = 1
         //                      _in x + 2
         //             _in x + 3)) * 4
-        Expr *test7 = new MultExpr(new AddExpr(new NumExpr(5),
+        PTR(Expr) test7 = new MultExpr(new AddExpr(new NumExpr(5),
                                        new LetExpr(new VarExpr("x"),
                                                 new LetExpr(new VarExpr("x"),
                                                          new NumExpr(1),
@@ -678,16 +679,16 @@ TEST_CASE("Expr Pretty Print"){
     }
 
     SECTION("boolExpr Pretty Print"){
-        Expr *test1 = new BoolExpr(true);
+        PTR(Expr) test1 = new BoolExpr(true);
         CHECK((test1 -> to_pretty_string()) == "_true");
-        Expr *test2 = new BoolExpr(false);
+        PTR(Expr) test2 = new BoolExpr(false);
         CHECK((test2 -> to_pretty_string()) == "_false");
     }
 
     SECTION("EqualExpr Pretty Print"){
-        Expr *test1 = new EqualExpr(new VarExpr("grade"), new NumExpr(99));
+        PTR(Expr) test1 = new EqualExpr(new VarExpr("grade"), new NumExpr(99));
         CHECK((test1 -> to_pretty_string()) == "grade == 99");
-        Expr *test2 = new EqualExpr(new VarExpr("grade"), new AddExpr(new NumExpr(10), new NumExpr(80)));
+        PTR(Expr) test2 = new EqualExpr(new VarExpr("grade"), new AddExpr(new NumExpr(10), new NumExpr(80)));
         CHECK((test2 -> to_pretty_string()) == "grade == 10 + 80");
     }
 
@@ -695,7 +696,7 @@ TEST_CASE("Expr Pretty Print"){
         // _if 0 == -1 + 1
         // _then 1
         // _else 0
-        Expr *test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
+        PTR(Expr) test1 = new IfExpr(new EqualExpr(new NumExpr(0), new AddExpr(new NumExpr(-1), new NumExpr(1))),
                                 new NumExpr(1), new NumExpr(0));
         CHECK((test1 -> to_pretty_string()) == "_if 0 == -1 + 1\n"
                                                "_then 1\n"
@@ -703,7 +704,7 @@ TEST_CASE("Expr Pretty Print"){
         // if good
         // _then 1
         // _else 0
-        Expr *test2 = new IfExpr(new VarExpr("good"),new NumExpr(1), new NumExpr(0));
+        PTR(Expr) test2 = new IfExpr(new VarExpr("good"),new NumExpr(1), new NumExpr(0));
         CHECK((test2 -> to_pretty_string()) == "_if good\n"
                                                "_then 1\n"
                                                "_else 0");
@@ -798,7 +799,7 @@ TEST_CASE("Expr Parse"){
 TEST_CASE("NumVal Tests"){
     
     SECTION("NumVal equals()"){
-        Val *test = new NumVal(3);
+        PTR(Val) test = new NumVal(3);
         CHECK(test -> equals (new NumVal(3)) == true);
         CHECK(test -> equals (new NumVal(5)) == false);
         CHECK(test -> equals ((new AddExpr(new NumExpr(1), new NumExpr(2))) -> interp()) == true);
@@ -806,28 +807,28 @@ TEST_CASE("NumVal Tests"){
     }
     
     SECTION("NumVal toExpr()"){
-        Val *test = new NumVal(-7);
+        PTR(Val) test = new NumVal(-7);
         CHECK(((test -> to_expr()) -> equals(new NumExpr(-7))) == true);
         CHECK(((test -> to_expr()) -> equals(new NumExpr(7))) == false);
     }
     
     SECTION("NumVal to_string()"){
-        Val *test = new NumVal(1010);
+        PTR(Val) test = new NumVal(1010);
         CHECK(((test -> to_string()) == "1010") == true);
         CHECK(((test -> to_string()) == "0101") == false);
     }
     
     SECTION("NumVal add_to()"){
-        Val *test1 = new NumVal(-5);
-        Val *test2 = new NumVal(5);
+        PTR(Val) test1 = new NumVal(-5);
+        PTR(Val) test2 = new NumVal(5);
         CHECK(((test1 -> add_to(test2)) -> equals (new NumVal(0))) == true);
         CHECK(((test1 -> add_to(test2)) -> equals (new NumVal(5))) == false);
         CHECK_THROWS_WITH(((test1 -> add_to(new BoolVal(true)))), "Error: rhs of Val add_to() must be a NumVal.");
     }
     
     SECTION("NumVal mult_to()"){
-        Val *test1 = new NumVal(-5);
-        Val *test2 = new NumVal(5);
+        PTR(Val) test1 = new NumVal(-5);
+        PTR(Val) test2 = new NumVal(5);
         CHECK(((test1 -> mult_by(test2)) -> equals (new NumVal(-25))) == true);
         CHECK(((test1 -> mult_by(test2)) -> equals (new NumVal(25))) == false);
         CHECK_THROWS_WITH(((test1 -> mult_by(new BoolVal(false)))), "Error: rhs of Val mult_by() must be a NumVal.");
@@ -837,41 +838,41 @@ TEST_CASE("NumVal Tests"){
 TEST_CASE("BoolVal Tests"){
 
     SECTION("BoolVal equals()"){
-        Val *test = new BoolVal(true);
+        PTR(Val) test = new BoolVal(true);
         CHECK(test -> equals (new BoolVal(true)) == true);
         CHECK(test -> equals (new BoolVal(false)) == false);
         CHECK(test -> equals (new NumVal(1)) == false);
     }
     
     SECTION("BoolVal toExpr()"){
-        Val *test = new BoolVal(true);
+        PTR(Val) test = new BoolVal(true);
         CHECK(((test -> to_expr()) == NULL) == true);
     }
     
     SECTION("BoolVal to_string()"){
-        Val *test1 = new BoolVal(true);
+        PTR(Val) test1 = new BoolVal(true);
         CHECK(((test1 -> to_string()) == "_true") == true);
         CHECK(((test1 -> to_string()) == "_false") == false);
-        Val *test2 = new BoolVal(false);
+        PTR(Val) test2 = new BoolVal(false);
         CHECK(((test2 -> to_string()) == "_false") == true);
         CHECK(((test2 -> to_string()) == "_true") == false);
     }
     
     SECTION("BoolVal add_to()"){
-        Val *test = new BoolVal(true);
+        PTR(Val) test = new BoolVal(true);
         CHECK_THROWS_WITH((test -> add_to(new NumVal(1))), "Error: BoolVal cannot be added.");
         CHECK_THROWS_WITH((test -> add_to(new BoolVal(true))), "Error: BoolVal cannot be added.");
     }
     
     SECTION("BoolVal mult_to()"){
-        Val *test = new BoolVal(true);
+        PTR(Val) test = new BoolVal(true);
         CHECK_THROWS_WITH((test -> mult_by(new NumVal(1))), "Error: BoolVal cannot be multiplied.");
         CHECK_THROWS_WITH((test -> mult_by(new BoolVal(true))), "Error: BoolVal cannot be multiplied.");
     }
 }
 
 TEST_CASE("FunVal Tests"){
-    Val *test = new FunVal("test", new AddExpr(new NumExpr(1), new VarExpr("x")));
+    PTR(Val) test = new FunVal("test", new AddExpr(new NumExpr(1), new VarExpr("x")));
     
     SECTION("FunVal equals()"){
         CHECK(test -> equals (new FunVal("test", new AddExpr(new NumExpr(1), new VarExpr("x")))) == true);
