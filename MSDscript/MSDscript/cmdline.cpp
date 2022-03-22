@@ -7,13 +7,11 @@
 #define CATCH_CONFIG_RUNNER
 
 #include <iostream>
-#include <stdexcept>
-#include <stack>
 #include "cmdline.hpp"
 #include "catch.hpp"
 #include "parse.hpp"
 #include "expr.hpp"
-#include "val.hpp"
+#include "env.hpp"
 
 void use_arguments(int argc, char **argv){
     
@@ -69,52 +67,44 @@ void use_arguments(int argc, char **argv){
         
         // deal with interp in terminal
         else if (command == "--interp"){
-            while(true){
-                try {
-                    // parse the std::cin
-                    PTR(Expr) expr = parse_stream(std::cin);
-                    // interp the std::cin
-                    std::string result = (expr -> interp()) -> to_string();
-                    // print out result
-                    std::cout << result << std::endl;
-                } catch (std::runtime_error& e){
-                    std::cout << "Error: " << e.what() << std::endl;
-                    exit(1);
-                }
+            try {
+                // parse the std::cin
+                PTR(Expr) expr = parse_stream(std::cin);
+                PTR(Val) result = expr -> interp(new EmptyEnv);
+                std::cout << result -> to_string();
+            } catch (std::runtime_error& e){
+                std::cout << "Error: " << e.what() << std::endl;
+                exit(1);
             }
             return;
         }
         
         // deal with print in terminal
         else if (command == "--print"){
-            while(true){
-                try{
-                    // parse the std::cin
-                    PTR(Expr) expr = parse_expr(std::cin);
-                    // print the std::cin
-                    expr -> print(std::cout);
-                    std::cout << "\n";
-                } catch (std::runtime_error& e){
-                    std::cout << "Error: " << e.what() << std::endl;
-                    exit(1);
-                }
+            try{
+                // parse the std::cin
+                PTR(Expr) expr = parse_expr(std::cin);
+                // print the std::cin
+                expr -> print(std::cout);
+                std::cout << "\n";
+            } catch (std::runtime_error& e){
+                std::cout << "Error: " << e.what() << std::endl;
+                exit(1);
             }
             return;
         }
         
         // deal with pretty print in terminal
         else if (command == "--pretty-print"){
-            while(true){
-                try{
-                    // parse the std::cin
-                    PTR(Expr) expr = parse_expr(std::cin);
-                    // print the std::cin
-                    std::string result = expr -> to_pretty_string();
-                    std::cout << result << "\n";
-                } catch (std::runtime_error& e){
-                    std::cout << "Error: " << e.what() << std::endl;
-                    exit(1);
-                }
+            try{
+                // parse the std::cin
+                PTR(Expr) expr = parse_expr(std::cin);
+                // print the std::cin
+                std::string result = expr -> to_pretty_string();
+                std::cout << result << "\n";
+            } catch (std::runtime_error& e){
+                std::cout << "Error: " << e.what() << std::endl;
+                exit(1);
             }
             return;
         }
