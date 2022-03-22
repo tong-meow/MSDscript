@@ -5,11 +5,15 @@
 //  Created by Tong Shen on 1/17/22.
 //
 
-#include <iostream>
+
 #include <sstream>
+#include <string>
 #include <stdexcept>
 #include "expr.hpp"
+#include "catch.hpp"
+#include "parse.hpp"
 #include "val.hpp"
+#include "env.hpp"
 
 
 /*/////////////////////////////// NON-VIRTUAL FUNCTIONS ///////////////////////////////*/
@@ -23,7 +27,7 @@ std::string Expr::to_string(){
 
 // the pretty_print function uses helper preety_print_at() function to print an Expr
 void Expr::pretty_print(std::ostream &os){
-    this -> pretty_print_at(os, prec_none, false, false, 0);
+    this -> pretty_print_at(os, 0, 0);
 }
 
 // to_pretty_string function uses pretty_print() to return a string version of an Expr
@@ -50,24 +54,19 @@ bool NumExpr::equals(PTR(Expr) e){
     return ((this -> rep) == (target -> rep));
 }
 
-PTR(Val) NumExpr::interp(){
+PTR(Val) NumExpr::interp(PTR(Env) env){
     return new NumVal(this -> rep);
-}
-
-bool NumExpr::has_variable(){
-    return false;
-}
-
-PTR(Expr) NumExpr::subst(std::string s, PTR(Expr) e){
-    return THIS;
 }
 
 void NumExpr::print(std::ostream& os){
     os << (this -> rep);
 }
 
-void NumExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                          bool nestedLet, int spaces){
+void NumExpr::pretty_print(std::ostream &os){
+    pretty_print_at(os, 0, 0);
+}
+
+void NumExpr::pretty_print_at(std::ostream& os, int level, int space){
     os << (this -> rep);
 };
 
@@ -88,17 +87,9 @@ bool AddExpr::equals(PTR(Expr) e){
             && ((this->rhs) -> equals (target->rhs)));
 }
 
-PTR(Val) AddExpr::interp(){
-    return ((this -> lhs) -> interp())->
-            add_to( (this -> rhs) -> interp() );
-}
-
-bool AddExpr::has_variable(){
-    return (lhs -> has_variable() || rhs -> has_variable());
-}
-
-PTR(Expr) AddExpr::subst(std::string s, PTR(Expr) e){
-    return (new AddExpr((this-> lhs) -> subst(s, e), (this-> rhs) -> subst(s, e)));
+PTR(Val) AddExpr::interp(PTR(Env) env){
+    return ((this -> lhs) -> interp(env))->
+            add_to( (this -> rhs) -> interp(env));
 }
 
 void AddExpr::print(std::ostream& os){
@@ -109,41 +100,21 @@ void AddExpr::print(std::ostream& os){
     os << ')';
 }
 
-//void AddExpr::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
-//    // there are 2 occasions that AddExpr doesn't need ()
-//    // 1. it is at the top level
-//    // 2. it is inside a '+' but at the right side. e.g. 1 + 2 + 3, the '2 + 3' needs no ()
-//    if ((!insideAdd && !insideMult) || (insideAdd && !lhs)){
-//        (this -> lhs) -> pretty_print_at(os, true, false, true);
-//        os << " + ";
-//        (this -> rhs) -> pretty_print_at(os, true, false, false);
-//    }else{
-//        os << '(';
-//        (this -> lhs) -> pretty_print_at(os, true, false, true);
-//        os << " + ";
-//        (this -> rhs) -> pretty_print_at(os, true, false, false);
-//        os << ')';
-//    }
-//}
-void AddExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                          bool nestedLet, int spaces){
-    long start = os.tellp();
-    if (prec < 3 || (prec==3 && !lhs)){
-        (this -> lhs) -> pretty_print_at(os, prec_add, true, true, spaces);
-        os << " + ";
-        long end1 = os.tellp();
-        (this -> rhs) -> pretty_print_at(os, prec_add, false, nestedLet,
-                                         spaces+(int)(end1-start));
-    }else{
-        os << '(';
-        long end2 = os.tellp();
-        (this -> lhs) -> pretty_print_at(os, prec_add, true, true,
-                                         spaces+(int)(end2-start));
-        os << " + ";
-        long end3 = os.tellp();
-        (this -> rhs) -> pretty_print_at(os, prec_add, false, nestedLet,
-                                         spaces+(int)(end3-start));
-        os << ')';
+void AddExpr::pretty_print(std::ostream &os){
+    (this -> lhs) -> pretty_print_at(os, 1, 0);
+    os << " + ";
+    (this -> rhs) -> pretty_print_at(os, 6, 0);
+}
+
+void AddExpr::pretty_print_at(std::ostream& os, int level, int space){
+    if (level == 1 || level == 3 || level == 4){
+        os << "(";
+    }
+    (this -> lhs) -> pretty_print_at(os, 3, space);
+    os << " + ";
+    (this -> rhs) -> pretty_print_at(os, 6, space);
+    if (level == 1 || level == 3 || level == 4){
+        os << ")";
     }
 }
 
@@ -163,17 +134,9 @@ bool MultExpr::equals(PTR(Expr) e){
             && ((this->rhs) -> equals (target->rhs)));
 }
 
-PTR(Val) MultExpr::interp(){
-    return ((this -> lhs) -> interp()) ->
-            mult_by ((this -> rhs) -> interp());
-}
-
-bool MultExpr::has_variable(){
-    return (lhs -> has_variable() || rhs -> has_variable());
-}
-
-PTR(Expr) MultExpr::subst(std::string s, PTR(Expr) e){
-    return (new MultExpr((this-> lhs) -> subst(s, e), (this-> rhs) -> subst(s, e)));
+PTR(Val) MultExpr::interp(PTR(Env) env){
+    return ((this -> lhs) -> interp(env)) ->
+            mult_by((this -> rhs) -> interp(env));
 }
 
 void MultExpr::print(std::ostream& os){
@@ -184,41 +147,27 @@ void MultExpr::print(std::ostream& os){
     os << ')';
 }
 
-//void MultExpr::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
-//    // there is only 1 occasion that MultExpr needs ()
-//    // 1. it is inside a MultExpr and is at the left side
-//    //    e.g. (3 * 2) * 1, the (3 * 2) needs ()
-//    if (insideMult && lhs){
-//        os << '(';
-//        (this -> lhs) -> pretty_print_at(os, false, true, true);
-//        os << " * ";
-//        (this -> rhs) -> pretty_print_at(os, false, true, false);
-//        os << ')';
-//    }else{
-//        (this -> lhs) -> pretty_print_at(os, false, true, true);
-//        os << " * ";
-//        (this -> rhs) -> pretty_print_at(os, false, true, false);
-//    }
-//}
-void MultExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                           bool nestedLet, int spaces){
-    long start = os.tellp();
-    if (prec >= 4 && lhs){
-        os << '(';
-        long end1 = os.tellp();
-        (this -> lhs) -> pretty_print_at(os, prec_mult, true, true,
-                                         spaces+(int)(end1-start));
+void MultExpr::pretty_print(std::ostream &os){
+    (this -> lhs) -> pretty_print_at(os, 4, 0);
+    os << " * ";
+    (this -> rhs) -> pretty_print_at(os, 1, 0);
+}
+
+void MultExpr::pretty_print_at(std::ostream& os, int level, int space){
+    if (level == 3){
+        (this -> lhs) -> pretty_print_at(os, 4, space);
         os << " * ";
-        long end2 = os.tellp();
-        (this -> rhs) -> pretty_print_at(os, prec_mult, false, nestedLet,
-                                         spaces+(int)(end2-start));
-        os << ')';
-    }else{
-        (this -> lhs) -> pretty_print_at(os, prec_mult, true, true, spaces);
+        (this -> rhs) -> pretty_print_at(os, 3, space);
+    } else {
+        if (level == 4){
+            os << "(";
+        }
+        (this -> lhs) -> pretty_print_at(os, 4, space);
         os << " * ";
-        long end3 = os.tellp();
-        (this -> rhs) -> pretty_print_at(os, prec_mult, false, nestedLet,
-                                         spaces+(int)(end3-start));
+        (this -> rhs) -> pretty_print_at(os, 1, space);
+        if (level == 4){
+            os << ")";
+        }
     }
 }
 
@@ -233,36 +182,23 @@ VarExpr::VarExpr(std::string str){
 bool VarExpr::equals(PTR(Expr) e){
     PTR(VarExpr) target = dynamic_cast<PTR(VarExpr)>(e);
     if (target == NULL) return false;
-    return ((this->str) == (target->str));
+    return ((this -> str) == (target -> str));
 }
 
-PTR(Val) VarExpr::interp(){
-    // throw exception since there is no integer value for a string
-    throw std::runtime_error("Expr contains a string element.");
-}
-
-bool VarExpr::has_variable(){
-    return true;
-}
-
-PTR(Expr) VarExpr::subst(std::string s, PTR(Expr) e){
-    if ((this -> str) == s){
-        return e;
-    }else{
-        return this;
-    }
+PTR(Val) VarExpr::interp(PTR(Env) env){
+    return env -> lookup(str);
 }
 
 void VarExpr::print(std::ostream& os){
-    os << (this->str);
+    os << (this -> str);
 }
 
-//void VarExpr::pretty_print_at(std::ostream& os, bool insideAdd, bool insideMult, bool lhs){
-//    os << (this->str);
-//}
-void VarExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                          bool nestedLet, int spaces){
-    os << (this->str);
+void VarExpr::pretty_print(std::ostream &os){
+    pretty_print_at(os, 0, 0);
+}
+
+void VarExpr::pretty_print_at(std::ostream& os, int level, int space){
+    os << (this -> str);
 };
 
 
@@ -285,40 +221,10 @@ bool LetExpr::equals(PTR(Expr) e){
             );
 }
 
-PTR(Val) LetExpr::interp(){
-    // if the rhs has VarExpr, directly accumulate
-//    if (rhs->has_variable()){
-//        return ((this->body)
-//                -> subst (((this->varName)->to_string()), (this->rhs)))
-//                -> interp();
-//    }
-    // if the rhs doesn't have VarExpr, interp the rhs first
-//    else{
-    PTR(Val) rhs_val = this -> rhs -> interp();
-    return ((this->body)
-            -> subst ((this->var)->to_string(), rhs_val -> to_expr()))
-            -> interp();
-//    }
-}
-
-bool LetExpr::has_variable(){
-    return ((this->rhs)->has_variable() || (this->body)->has_variable());
-}
-
-PTR(Expr) LetExpr::subst(std::string s, PTR(Expr) e){
-    // compare string s with varName of the _let
-    // if the names are same, use the nearest one
-    if (s == (this->var)->to_string()){
-        return new LetExpr(this->var,
-                        this->rhs->subst(s,e),
-                        this->body);
-    }
-    // if not, accumulate it
-    else{
-        return new LetExpr(this->var,
-                        this->rhs->subst(s, e),
-                        this->body->subst(s, e));
-    }
+PTR(Val) LetExpr::interp(PTR(Env) env){
+    PTR(Val) rhs_val = this -> rhs -> interp(env);
+    PTR(Env) sub_env = new ExtendedEnv(var->str, rhs_val, env);
+    return body -> interp(sub_env);
 }
 
 void LetExpr::print(std::ostream& os){
@@ -331,43 +237,34 @@ void LetExpr::print(std::ostream& os){
     os << ")";
 }
 
-void LetExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                           bool nestedLet, int spaces){
-    long start = os.tellp();
-    // 2 conditions require parentheses:
-    //  - when the LetExpr is the lhs of MultExpr or AddExpr (prec > 1 && lhs == true)
-    //  - when the LetExpr is the rhs of MultExpr or AddExpr, but is nested as the lhs of
-    //    an outer MultExpr or AddExpr (then the bool nestedLet would be true)
-    if ((prec > 1 && lhs) || nestedLet){
-        os << "(_let ";
-        this->var->pretty_print_at(os, prec_let, false, false, spaces+1);
-        os << " = ";
-        long end1 = os.tellp();
-        this->rhs->pretty_print_at(os, prec_let, false, false,
-                                   spaces+(int)(end1-start));
-        os << "\n";
-        // spaces + 1: the '1' stands for the '(' in '(_let'
-        for(int i=0; i<spaces+1; i++){
-            os << " ";
-        }
-        os << "_in ";
-        // spaces + 5: the '5' stands for the '(' + '_in '
-        this->body->pretty_print_at(os, prec_let, false, false, spaces+5);
+void LetExpr::pretty_print(std::ostream &os){
+    os << "_let " << (this -> var) -> to_string() << " = ";
+    (this -> rhs) -> pretty_print_at(os, 0, 0);
+    os << "\n";
+    int space = (int)os.tellp();
+    os << "_in ";
+    (this -> body) -> pretty_print_at(os, 0, space);
+}
+
+void LetExpr::pretty_print_at(std::ostream& os, int level, int space){
+    if (level == 3 || level == 4 || level == 5){
+        os << "(";
+    }
+    int current_position = (int)os.tellp();
+    int spaces = current_position - space;
+    os << "_let " << (this -> var) -> to_string() << " = ";
+    (this -> rhs) -> pretty_print_at(os, 0, space);
+    os << "\n";
+    space = (int)os.tellp();
+    int count = 0;
+    while (count < spaces){
+        os << " ";
+        count++;
+    }
+    os << "_in ";
+    (this -> body) -> pretty_print_at(os, 0, space);
+    if (level == 3 || level == 4 || level == 5){
         os << ")";
-    }else{
-        os << "_let ";
-        this->var->pretty_print_at(os, prec_let, false, false, spaces);
-        os << " = ";
-        long end2 = os.tellp();
-        this->rhs->pretty_print_at(os, prec_let, false, false,
-                                   spaces+(int)(end2-start));
-        os << "\n";
-        for(int i=0; i<spaces; i++){
-            os << " ";
-        }
-        os << "_in ";
-        // spaces + 4: the '4' stands for the '_in '
-        this->body->pretty_print_at(os, prec_let, false, false, spaces+4);
     }
 }
 
@@ -385,16 +282,8 @@ bool BoolExpr::equals(PTR(Expr) e){
     return (this -> rep) == (target -> rep);
 }
 
-PTR(Val) BoolExpr::interp(){
+PTR(Val) BoolExpr::interp(PTR(Env) env){
     return new BoolVal(this -> rep);
-}
-
-bool BoolExpr::has_variable(){
-    return false;
-}
-
-PTR(Expr) BoolExpr::subst(std::string s, PTR(Expr) e){
-    return this;
 }
 
 void BoolExpr::print(std::ostream& os){
@@ -405,8 +294,11 @@ void BoolExpr::print(std::ostream& os){
     }
 }
 
-void BoolExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                               bool nestedLet, int spaces){
+void BoolExpr::pretty_print(std::ostream &os){
+    pretty_print_at(os, 0, 0);
+}
+
+void BoolExpr::pretty_print_at(std::ostream& os, int level, int space){
     if (this -> rep){
         os << "_true";
     }else{
@@ -430,19 +322,11 @@ bool EqualExpr::equals(PTR(Expr) e){
            ((this -> rhs) -> equals(target -> rhs));
 }
 
-PTR(Val) EqualExpr::interp(){
-    if ((this -> lhs -> interp()) -> equals (this -> rhs -> interp()))
+PTR(Val) EqualExpr::interp(PTR(Env) env){
+    if ((this -> lhs -> interp(env)) -> equals (this -> rhs -> interp(env)))
         return new BoolVal(true);
     else
         return new BoolVal(false);
-}
-
-bool EqualExpr::has_variable(){
-    return ((this -> lhs) -> has_variable()) || ((this -> rhs) -> has_variable());
-}
-
-PTR(Expr) EqualExpr::subst(std::string s, PTR(Expr) e){
-    return new EqualExpr(((this -> lhs) -> subst(s, e)), ((this -> rhs) -> subst(s, e)));
 }
 
 void EqualExpr::print(std::ostream& os){
@@ -453,22 +337,23 @@ void EqualExpr::print(std::ostream& os){
     os << ")";
 }
 
-void EqualExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                                bool nestedLet, int spaces){
-    long start = os.tellp();
-    if (prec >= 2 && lhs){
-        os << '(';
-        long end1 = os.tellp();
-        (this -> lhs) -> pretty_print_at(os, prec_equal, true, nestedLet, spaces+(int)(end1-start));
+void EqualExpr::pretty_print(std::ostream &os){
+    (this -> lhs) -> pretty_print_at(os, 5, 0);
+    os << " == ";
+    (this -> rhs) -> pretty_print_at(os, 0, 0);
+}
+
+void EqualExpr::pretty_print_at(std::ostream& os, int level, int space){
+    if (level == 0){
+        (this -> lhs) -> pretty_print_at(os, 5, space);
         os << " == ";
-        long end2 = os.tellp();
-        (this -> lhs) -> pretty_print_at(os, prec_equal, true, nestedLet, spaces+(int)(end2-start));
-        os << ')';
-    }else{
-        (this -> lhs) -> pretty_print_at(os, prec_equal, true, nestedLet, spaces);
+        (this -> rhs) -> pretty_print_at(os, 0, space);
+    } else {
+        os << "(";
+        (this -> lhs) -> pretty_print_at(os, 5, space);
         os << " == ";
-        long end3 = os.tellp();
-        (this -> rhs) -> pretty_print_at(os, prec_equal, true, nestedLet, spaces+(int)(end3-start));
+        (this -> rhs) -> pretty_print_at(os, 0, space);
+        os << ")";
     }
 }
 
@@ -491,34 +376,22 @@ bool IfExpr::equals(PTR(Expr) e){
             (this -> else_part) -> equals(target -> else_part));
 }
 
-PTR(Val) IfExpr::interp(){
+PTR(Val) IfExpr::interp(PTR(Env) env){
     // cast the test_part
-    PTR(Val) test = this -> test_part -> interp();
+    PTR(Val) test = this -> test_part -> interp(env);
     PTR(BoolVal) test_val = dynamic_cast<PTR(BoolVal)>(test);
     // null: test_part is not a boolean value, error
     if (test_val == NULL){
-        throw std::runtime_error("Error: IfExpr's condition is not a boolean value.");
+        throw std::runtime_error("IfExpr's condition is not a boolean value.");
     }
     // true: value = then_part
     else if ( (test_val -> rep) == true ) {
-        return this -> then_part -> interp();
+        return this -> then_part -> interp(env);
     }
     // false: value = else_part
     else{
-        return this -> else_part -> interp();
+        return this -> else_part -> interp(env);
     }
-}
-
-bool IfExpr::has_variable(){
-    return ((this -> test_part) -> has_variable() ||
-            (this -> then_part) -> has_variable() ||
-            (this -> else_part) -> has_variable());
-}
-
-PTR(Expr) IfExpr::subst(std::string s, PTR(Expr) e){
-    return new IfExpr(((this -> test_part) -> subst(s, e)),
-                      ((this -> then_part) -> subst(s, e)),
-                      ((this -> else_part) -> subst(s, e)));
 }
 
 void IfExpr::print(std::ostream& os){
@@ -531,14 +404,52 @@ void IfExpr::print(std::ostream& os){
     os << "))";
 }
 
-void IfExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                     bool nestedLet, int spaces){
+void IfExpr::pretty_print(std::ostream &os){
     os << "_if ";
-    this -> test_part -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
-    os << "\n_then ";
-    this -> then_part -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
-    os << "\n_else ";
-    this -> else_part -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
+    (this -> test_part) ->pretty_print_at(os, 0, 0);
+    os << "\n";
+    int space = (int)os.tellp();
+    os << "_then ";
+    (this -> then_part) ->pretty_print_at(os, 0, space);
+    os << "\n";
+    space = (int)os.tellp();
+    os << "_else ";
+    (this -> else_part) -> pretty_print_at(os, 0, space);
+}
+
+void IfExpr::pretty_print_at(std::ostream& os, int level, int space){
+    if (level == 3 || level == 4 || level == 5){
+        os << "(";
+    }
+    
+    int current_position = (int)os.tellp();
+    int spaces = current_position - space;
+    
+    os << "_if ";
+    (this -> test_part) -> pretty_print_at(os, 0, space);
+    os << "\n";
+    
+    space = (int)os.tellp();
+    int count = 0;
+    while (count < spaces){
+        os << " ";
+        count++;
+    }
+    os << "_then ";
+    (this -> then_part) -> pretty_print_at(os, 0, space);
+    os << "\n";
+    
+    space = (int)os.tellp();
+    count = 0;
+    while (count < spaces){
+        os << " ";
+        count++;
+    }
+    os << "_else ";
+    (this -> else_part) -> pretty_print_at(os, 0, space);
+    if (level == 3 || level == 4 || level == 5){
+        os << ")";
+    }
 }
 
 
@@ -547,8 +458,8 @@ void IfExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
 /*/////////////////// subclass 9: FunExpr ///////////////////*/
 
 FunExpr::FunExpr (std::string formal_arg, PTR(Expr) body) {
-    this->formal_arg = formal_arg;
-    this->body = body;
+    this -> formal_arg = formal_arg;
+    this -> body = body;
 }
 
 bool FunExpr::equals(PTR(Expr) e) {
@@ -558,19 +469,16 @@ bool FunExpr::equals(PTR(Expr) e) {
             (this -> body) -> equals(target -> body));
 }
 
-PTR(Val) FunExpr::interp() {
-    return new FunVal(formal_arg, body);
-}
+/*
+ FunVal::FunVal(std::string formal_arg, PTR(Expr) body, PTR(Env) env){
+     this -> formal_arg = formal_arg;
+     this -> body = body;
+     this -> env = env;
+ }
+ */
 
-bool FunExpr::has_variable(){
-    return body -> has_variable();
-}
-
-PTR(Expr) FunExpr::subst(std::string str, PTR(Expr) e) {
-    if (formal_arg != str)
-        return this;
-    else
-        return new FunExpr(formal_arg, body -> subst(str, e));
+PTR(Val) FunExpr::interp(PTR(Env) env) {
+    return new FunVal(formal_arg, body, env);
 }
 
 void FunExpr::print(std::ostream& os) {
@@ -579,12 +487,12 @@ void FunExpr::print(std::ostream& os) {
     os << ")";
 }
 
-void FunExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                              bool nestedLet, int spaces) {
-    // pretty-print needs modification
-    os << "_fun (" << formal_arg << ")\n  ";
-    body -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
-    os << "\n";
+void FunExpr::pretty_print(std::ostream &os){
+    print(os);
+}
+
+void FunExpr::pretty_print_at(std::ostream& os, int level, int space) {
+    print(os);
 }
 
 
@@ -603,17 +511,8 @@ bool CallExpr::equals(PTR(Expr) e) {
             (this -> actual_arg) -> equals(target->actual_arg));
 }
 
-PTR(Val) CallExpr::interp() {
-    return to_be_called -> interp() -> call(actual_arg -> interp());
-}
-
-bool CallExpr::has_variable(){
-    return (to_be_called -> has_variable() || actual_arg -> has_variable());
-}
-
-PTR(Expr) CallExpr::subst(std::string str, PTR(Expr) e) {
-    return new CallExpr(to_be_called -> subst(str, e),
-                        actual_arg -> subst(str, e));
+PTR(Val) CallExpr::interp(PTR(Env) env) {
+    return to_be_called -> interp(env) -> call(actual_arg -> interp(env));
 }
 
 void CallExpr::print(std::ostream& os) {
@@ -623,11 +522,10 @@ void CallExpr::print(std::ostream& os) {
     os << ")";
 }
 
-void CallExpr::pretty_print_at(std::ostream& os, precedence_t prec, bool lhs,
-                              bool nestedLet, int spaces) {
-    // pretty-print needs modification
-    this -> to_be_called -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
-    os << "(";
-    this -> actual_arg -> pretty_print_at(os, prec, lhs, nestedLet, spaces);
-    os << ")";
+void CallExpr::pretty_print(std::ostream &os){
+    print(os);
+}
+
+void CallExpr::pretty_print_at(std::ostream& os, int level, int space) {
+    print(os);
 }

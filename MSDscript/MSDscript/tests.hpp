@@ -11,5 +11,4 @@
 #include <stdio.h>
 #include "catch.hpp"
 
-
 #endif /* tests_hpp */

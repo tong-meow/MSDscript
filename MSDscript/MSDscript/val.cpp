@@ -5,11 +5,14 @@
 //  Created by Tong Shen on 2/16/22.
 //
 
+
 #include <string>
 #include <iostream>
 
 #include "val.hpp"
+#include "env.hpp"
 #include "expr.hpp"
+#include "parse.hpp"
 
 
 // subclass 1: NumVal
@@ -92,10 +95,10 @@ PTR(Val) BoolVal::call(PTR(Val) arg){
 
 
 // subclass 3: FunVal
-
-FunVal::FunVal(std::string formal_arg, PTR(Expr) body){
+FunVal::FunVal(std::string formal_arg, PTR(Expr) body, PTR(Env) env){
     this -> formal_arg = formal_arg;
     this -> body = body;
+    this -> env = env;
 }
 
 bool FunVal::equals(PTR(Val) val) {
@@ -125,8 +128,7 @@ PTR(Val) FunVal::mult_by(PTR(Val) v) {
 }
 
 PTR(Val) FunVal::call(PTR(Val) arg) {
-    PTR(LetExpr) let = new LetExpr(new VarExpr(this -> formal_arg),
-                               arg -> to_expr(),
-                               this -> body);
-    return let->interp();
+    return body -> interp(new ExtendedEnv(this -> formal_arg,
+                                          arg,
+                                          this -> env));
 }
