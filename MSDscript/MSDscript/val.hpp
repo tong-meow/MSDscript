@@ -4,14 +4,15 @@
 //
 //  Created by Tong Shen on 2/16/22.
 //
+#ifndef value_hpp
+#define value_hpp
 
 #include <stdio.h>
 #include <string>
 #include "pointer.hpp"
-#ifndef value_hpp
-#define value_hpp
 
 class Expr;
+class Env;
 
 // template Val
 class Val {
@@ -32,7 +33,7 @@ class NumVal : public Val {
 public:
     int rep;
     
-    NumVal(int rep);
+    NumVal(int val);
     
     virtual bool equals(PTR(Val) v);
     virtual PTR(Expr) to_expr();
@@ -48,7 +49,7 @@ class BoolVal : public Val {
 public:
     bool rep;
     
-    BoolVal(bool rep);
+    BoolVal(bool val);
     
     virtual bool equals(PTR(Val) v);
     virtual PTR(Expr) to_expr();
@@ -60,12 +61,13 @@ public:
 
 
 // subclass 3: FunVal (function)
-class FunVal: public Val {
+class FunVal : public Val {
 public:
     std::string formal_arg;
     PTR(Expr) body;
+    PTR(Env) env;
 
-    FunVal(std::string formal_arg, PTR(Expr) body);
+    FunVal(std::string formal_arg, PTR(Expr) body, PTR(Env) env);
     
     virtual bool equals(PTR(Val) v);
     virtual PTR(Expr) to_expr();
