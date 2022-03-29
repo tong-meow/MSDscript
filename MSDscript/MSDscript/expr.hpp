@@ -47,6 +47,8 @@ public:
     virtual void pretty_print_at(std::ostream& os, int level, int space) = 0;
     // to_pretty_string is used to convert an Expr to its string version with pretty_print()
     std::string to_pretty_string();
+    
+    virtual void step_interp() = 0;
 };
 
 
@@ -61,6 +63,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -76,6 +79,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -91,6 +95,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -105,6 +110,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -122,6 +128,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -136,6 +143,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -151,6 +159,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -167,6 +176,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -182,6 +192,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 
@@ -197,6 +208,7 @@ public:
     virtual void print(std::ostream& os);
     virtual void pretty_print(std::ostream& os);
     virtual void pretty_print_at(std::ostream& os, int level, int space);
+    void step_interp();
 };
 
 #endif /* expr_hpp */

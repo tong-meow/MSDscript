@@ -14,6 +14,7 @@
 #include "parse.hpp"
 #include "val.hpp"
 #include "env.hpp"
+#include "step.hpp"
 
 
 /*/////////////////////////////// NON-VIRTUAL FUNCTIONS ///////////////////////////////*/
@@ -70,6 +71,10 @@ void NumExpr::pretty_print_at(std::ostream& os, int level, int space){
     os << (this -> rep);
 };
 
+void NumExpr::step_interp() {
+    Step::mode = Step::continue_mode;
+    Step::val = NEW(NumVal)(rep);
+}
 
 
 
@@ -116,6 +121,13 @@ void AddExpr::pretty_print_at(std::ostream& os, int level, int space){
     if (level == 1 || level == 3 || level == 4){
         os << ")";
     }
+}
+
+void AddExpr::step_interp() {
+    Step::mode = Step::interp_mode;
+    Step::expr = lhs;
+    Step::env = Step::env;
+    Step::cont = NEW(RightThenAddCont)(rhs, Step::env, Step::cont);
 }
 
 
@@ -171,6 +183,12 @@ void MultExpr::pretty_print_at(std::ostream& os, int level, int space){
     }
 }
 
+void MultExpr::step_interp() {
+    Step::mode = Step::interp_mode;
+    Step::expr = lhs;
+    Step::env = Step::env;
+    Step::cont = NEW(RightThenMultCont)(rhs, Step::env, Step::cont);
+}
 
 
 /*/////////////////// subclass 4: VarExpr ///////////////////*/
@@ -201,6 +219,10 @@ void VarExpr::pretty_print_at(std::ostream& os, int level, int space){
     os << (this -> str);
 };
 
+void VarExpr::step_interp() {
+    Step::mode = Step::continue_mode;
+    Step::val = Step::env -> lookup(str);
+}
 
 
 
@@ -268,6 +290,15 @@ void LetExpr::pretty_print_at(std::ostream& os, int level, int space){
     }
 }
 
+void LetExpr::step_interp() {
+    Step::mode = Step::interp_mode;
+    Step::expr = rhs;
+    Step::env = Step::env;
+    Step::cont = new LetBodyCont((this -> var) -> to_string(),
+                                 (this -> body),
+                                 Step::env,
+                                 Step::cont);
+}
 
 
 
@@ -304,6 +335,11 @@ void BoolExpr::pretty_print_at(std::ostream& os, int level, int space){
     }else{
         os << "_false";
     }
+}
+
+void BoolExpr::step_interp() {
+    Step::mode = Step::continue_mode;
+    Step::val = NEW(BoolVal)(rep);
 }
 
 
@@ -357,6 +393,12 @@ void EqualExpr::pretty_print_at(std::ostream& os, int level, int space){
     }
 }
 
+void EqualExpr::step_interp() {
+    Step::mode = Step::interp_mode;
+    Step::expr = lhs;
+    Step::env = Step::env;
+    Step::cont = NEW(RightThenEqCont)(rhs, Step::env, Step::cont);
+}
 
 
 
@@ -452,6 +494,12 @@ void IfExpr::pretty_print_at(std::ostream& os, int level, int space){
     }
 }
 
+void IfExpr::step_interp() {
+    Step::mode = Step::interp_mode;
+    Step::expr = test_part;
+    Step::env = Step::env;
+    Step::cont = NEW(IfBranchCont)(then_part, else_part, Step::env, Step::cont);
+}
 
 
 
@@ -495,6 +543,10 @@ void FunExpr::pretty_print_at(std::ostream& os, int level, int space) {
     print(os);
 }
 
+void FunExpr::step_interp() {
+    Step::mode = Step::continue_mode;
+    Step::val = NEW(FunVal)(formal_arg, body, Step::env);
+}
 
 
 /*/////////////////// subclass 10: CallExpr ///////////////////*/
@@ -528,4 +580,11 @@ void CallExpr::pretty_print(std::ostream &os){
 
 void CallExpr::pretty_print_at(std::ostream& os, int level, int space) {
     print(os);
+}
+
+void CallExpr::step_interp() {
+    Step::mode = Step::interp_mode;
+    Step::expr = to_be_called;
+    Step::env = Step::env;
+    Step::cont = NEW(ArgThenCallCont)(actual_arg, Step::env, Step::cont);
 }

@@ -13,6 +13,7 @@
 
 class Expr;
 class Env;
+class Cont;
 
 // template Val
 class Val {
@@ -24,6 +25,8 @@ public:
     virtual PTR(Val) add_to(PTR(Val) v) = 0;
     virtual PTR(Val) mult_by(PTR(Val) v) = 0;
     virtual PTR(Val) call(PTR(Val) arg) = 0;
+    virtual bool is_true() = 0;
+    virtual void call_step(PTR(Val) actual_arg_val, PTR(Cont) rest) = 0;
     
 };
 
@@ -41,6 +44,8 @@ public:
     virtual PTR(Val) add_to(PTR(Val) v);
     virtual PTR(Val) mult_by(PTR(Val) v);
     virtual PTR(Val) call(PTR(Val) arg);
+    virtual bool is_true();
+    virtual void call_step(PTR(Val) actual_arg_val, PTR(Cont) rest);
 };
 
 
@@ -57,6 +62,9 @@ public:
     virtual PTR(Val) add_to(PTR(Val) v);
     virtual PTR(Val) mult_by(PTR(Val) v);
     virtual PTR(Val) call(PTR(Val) arg);
+    virtual bool is_true();
+    virtual void call_step(PTR(Val) actual_arg_val, PTR(Cont) rest);
+    
 };
 
 
@@ -75,6 +83,9 @@ public:
     virtual PTR(Val) add_to(PTR(Val) v);
     virtual PTR(Val) mult_by(PTR(Val) v);
     virtual PTR(Val) call(PTR(Val) arg);
+    virtual bool is_true();
+    virtual void call_step(PTR(Val) actual_arg_val, PTR(Cont) rest);
+    
 };
 
 
