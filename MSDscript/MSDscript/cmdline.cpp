@@ -68,10 +68,22 @@ void use_arguments(int argc, char **argv){
         // deal with interp in terminal
         else if (command == "--interp"){
             try {
-                // parse the std::cin
-                PTR(Expr) expr = parse_stream(std::cin);
+                // read the user's input
+                std::string input = "";
+                std::string line;
+                while(std::getline(std::cin, line)){
+                    if (line.empty()){
+                        break;
+                    }
+                    input.append(line);
+                }
+                // parse the input
+                std::stringstream ss;
+                ss << input;
+                PTR(Expr) expr = parse_stream(ss);
                 PTR(Val) result = expr -> interp(new EmptyEnv);
                 std::cout << result -> to_string();
+                std::cout << std::endl;
             } catch (std::runtime_error& e){
                 std::cout << "Error: " << e.what() << std::endl;
                 exit(1);
@@ -81,12 +93,22 @@ void use_arguments(int argc, char **argv){
         
         // deal with print in terminal
         else if (command == "--print"){
-            try{
-                // parse the std::cin
-                PTR(Expr) expr = parse_expr(std::cin);
-                // print the std::cin
+            try {
+                // read the user's input
+                std::string input = "";
+                std::string line;
+                while(std::getline(std::cin, line)){
+                    if (line.empty()){
+                        break;
+                    }
+                    input.append(line);
+                }
+                // parse the input
+                std::stringstream ss;
+                ss << input;
+                PTR(Expr) expr = parse_stream(ss);
                 expr -> print(std::cout);
-                std::cout << "\n";
+                std::cout << std::endl;
             } catch (std::runtime_error& e){
                 std::cout << "Error: " << e.what() << std::endl;
                 exit(1);
@@ -96,12 +118,22 @@ void use_arguments(int argc, char **argv){
         
         // deal with pretty print in terminal
         else if (command == "--pretty-print"){
-            try{
-                // parse the std::cin
-                PTR(Expr) expr = parse_expr(std::cin);
-                // print the std::cin
-                std::string result = expr -> to_pretty_string();
-                std::cout << result << "\n";
+            try {
+                // read the user's input
+                std::string input = "";
+                std::string line;
+                while(std::getline(std::cin, line)){
+                    if (line.empty()){
+                        break;
+                    }
+                    input.append(line);
+                }
+                // parse the input
+                std::stringstream ss;
+                ss << input;
+                PTR(Expr) expr = parse_stream(ss);
+                expr -> pretty_print(std::cout);
+                std::cout << std::endl;
             } catch (std::runtime_error& e){
                 std::cout << "Error: " << e.what() << std::endl;
                 exit(1);

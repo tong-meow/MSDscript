@@ -14,6 +14,8 @@
 #include "val.hpp"
 #include "env.hpp"
 #include "pointer.hpp"
+#include "step.hpp"
+#include "cont.hpp"
 
 // EQUAL TESTS
 
@@ -685,5 +687,81 @@ TEST_CASE("FunVal Tests"){
     SECTION("FunVal mult_to()"){
         CHECK_THROWS_WITH((test -> mult_by(new NumVal(1))), "Error: FunVal cannot be multiplied.");
         CHECK_THROWS_WITH((test -> mult_by(new BoolVal(true))), "Error: FunVal cannot be multiplied.");
+    }
+}
+
+
+TEST_CASE("Step Tests") {
+    
+    SECTION("NumExpr") {
+        CHECK(Step::interp_by_steps(new NumExpr(5)) ->equals (new NumVal(5)) == true);
+        CHECK(Step::interp_by_steps(new NumExpr(-5))->equals(new NumVal(5)) == false);
+    }
+    
+    SECTION("AddExpr"){
+        CHECK(Step::interp_by_steps(new AddExpr(new NumExpr(1), new NumExpr(2)))
+              -> equals (new NumVal(3)) == true);
+        CHECK(Step::interp_by_steps(new AddExpr(new NumExpr(2), new NumExpr(3)))
+              -> equals(new NumVal(6)) == false);
+    }
+    
+    SECTION("MultExpr") {
+        CHECK(Step::interp_by_steps(new MultExpr(new NumExpr(1), new NumExpr(2)))
+              -> equals(new NumVal(2)) == true);
+        CHECK(Step::interp_by_steps(new MultExpr(new NumExpr(1), new NumExpr(2)))
+              -> equals(new NumVal(-2)) == false);
+    }
+    
+    SECTION("LetExpr") {
+        CHECK(Step::interp_by_steps(new LetExpr (new VarExpr("x"), new NumExpr(1), new AddExpr(new VarExpr("x"), new NumExpr(1))))
+              -> equals(new NumVal(2)) == true);
+        CHECK(Step::interp_by_steps(new LetExpr(new VarExpr("x"), new NumExpr(3), new AddExpr(new VarExpr("x"), new NumExpr(5))))
+              -> equals(new NumVal(2)) == false);
+    }
+    
+    SECTION("BoolExpr") {
+        CHECK(Step::interp_by_steps(new BoolExpr(true))
+              -> equals(new BoolVal(true)) == true);
+        CHECK(Step::interp_by_steps(new BoolExpr(true))
+              -> equals(new BoolVal(false)) == false);
+    }
+    
+    SECTION("EqualExpr") {
+        CHECK(Step::interp_by_steps(new EqualExpr(new NumExpr(2), new NumExpr(2)))
+              -> equals(new BoolVal(true)) == true);
+        CHECK(Step::interp_by_steps(new EqualExpr(new NumExpr(4), new NumExpr(3)))
+              -> equals(new BoolVal(false)) == true);
+    }
+    
+    SECTION("IfExpr") {
+        CHECK(Step::interp_by_steps(new IfExpr(new BoolExpr(true),
+                                               new NumExpr(1),
+                                               new NumExpr(0)))
+              -> equals(new NumVal(1)));
+        CHECK(Step::interp_by_steps(new IfExpr(new BoolExpr(false),
+                                               new NumExpr(1),
+                                               new NumExpr(0)))
+              -> equals(new NumVal(0)));
+        CHECK(Step::interp_by_steps(new IfExpr(new EqualExpr(new NumExpr(1),
+                                                             new NumExpr(1)),
+                                               new NumExpr(1),
+                                               new NumExpr(0)))
+              -> equals(new NumVal(1)));
+        CHECK(Step::interp_by_steps(new IfExpr(new EqualExpr(new NumExpr(1),
+                                                             new NumExpr(-1)),
+                                               new NumExpr(1),
+                                               new NumExpr(0)))
+              -> equals(new NumVal(0)));
+    }
+    
+    SECTION("FunExpr") {
+        CHECK(Step::interp_by_steps(new FunExpr("x", new NumExpr(1)))
+              -> equals (new FunVal("x", new NumExpr(1), new EmptyEnv())) == true);
+        CHECK(Step::interp_by_steps(new FunExpr("x", new AddExpr(new NumExpr(1),
+                                                                 new VarExpr("x"))))
+              -> equals (new FunVal("x",
+                                    new AddExpr(new NumExpr(1),
+                                                new VarExpr("x")),
+                                    new EmptyEnv())) == true);
     }
 }

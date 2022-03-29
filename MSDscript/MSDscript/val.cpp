@@ -13,6 +13,7 @@
 #include "env.hpp"
 #include "expr.hpp"
 #include "parse.hpp"
+#include "step.hpp"
 
 
 // subclass 1: NumVal
@@ -55,6 +56,12 @@ PTR(Val) NumVal::call(PTR(Val) arg){
     throw std::runtime_error("Error: call() is unavailable for a NumVal.");
 }
 
+bool NumVal::is_true() {
+    return false;
+}
+
+void NumVal::call_step(PTR(Val) actual_arg_val, PTR(Cont) rest) {}
+
 
 // subclass 2: BoolVal
 
@@ -92,6 +99,11 @@ PTR(Val) BoolVal::call(PTR(Val) arg){
     throw std::runtime_error("Error: call() is unavailable for a BoolVal.");
 }
 
+bool BoolVal::is_true() {
+    return rep;
+}
+
+void BoolVal::call_step(PTR(Val) actual_arg_val, PTR(Cont) rest) {}
 
 
 // subclass 3: FunVal
@@ -131,4 +143,15 @@ PTR(Val) FunVal::call(PTR(Val) arg) {
     return body -> interp(new ExtendedEnv(this -> formal_arg,
                                           arg,
                                           this -> env));
+}
+
+bool FunVal::is_true() {
+    return false;
+}
+
+void FunVal::call_step(PTR(Val) actual_arg_val, PTR(Cont) rest) {
+    Step::mode = Step::interp_mode;
+    Step::expr = body;
+    Step::env = NEW(ExtendedEnv)(formal_arg, actual_arg_val, env);
+    Step::cont = rest;
 }
