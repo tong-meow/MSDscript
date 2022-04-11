@@ -1,5 +1,5 @@
-OBJS = main.o cmdline.o expr.o parse.o val.o tests.o env.o step.o cont.o
-INCS = cmdline.hpp expr.hpp catch.hpp parse.hpp val.hpp tests.hpp pointer.hpp env.hpp step.hpp cont.hpp
+OBJS = main.o expr.o parse.o val.o tests.o env.o step.o cont.o
+INCS = expr.hpp catch.hpp parse.hpp val.hpp tests.hpp pointer.hpp env.hpp step.hpp cont.hpp
 CXXFLAGS = --std=c++14 -O2
 
 test_OBJS = testDriver.o testGeneration.o exec.o parse.o val.o expr.o env.o step.o cont.o
@@ -17,9 +17,6 @@ test: msdscript
 
 main.o: main.cpp $(INCS)
 	$(CXX) $(CXXFLAGS) -c main.cpp
-
-cmdline.o: cmdline.cpp $(INCS)
-	$(CXX) $(CXXFLAGS) -c cmdline.cpp
 
 expr.o: expr.cpp $(INCS)
 	$(CXX) $(CXXFLAGS) -c expr.cpp

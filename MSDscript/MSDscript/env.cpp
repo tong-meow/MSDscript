@@ -21,7 +21,7 @@ bool EmptyEnv::equals(PTR(Env) env) {
     if (target_env == NULL)
         throw std::runtime_error("Unable to cast the env to EmptyEnv");
     else
-        return target_env;
+        return true;
 }
 
 

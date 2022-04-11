@@ -20,7 +20,7 @@ PTR(Val) Step::val;     /* only for Step::continue_mode */
 PTR(Val) Step::interp_by_steps(PTR(Expr) e) {
     Step::mode = Step::interp_mode;
     Step::expr = e;
-    Step::env = new EmptyEnv();
+    Step::env = NEW(EmptyEnv)();
     Step::val = nullptr;
     Step::cont = Cont::done;
     

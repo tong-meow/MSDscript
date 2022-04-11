@@ -28,7 +28,7 @@ std::string Expr::to_string(){
 
 // the pretty_print function uses helper preety_print_at() function to print an Expr
 void Expr::pretty_print(std::ostream &os){
-    this -> pretty_print_at(os, 0, 0);
+    this -> pretty_print_at(os, prec_none, false, 0);
 }
 
 // to_pretty_string function uses pretty_print() to return a string version of an Expr
@@ -50,24 +50,20 @@ NumExpr::NumExpr(int rep){
 }
 
 bool NumExpr::equals(PTR(Expr) e){
-    PTR(NumExpr) target = dynamic_cast<PTR(NumExpr)>(e);
+    PTR(NumExpr) target = CAST(NumExpr)(e);
     if (target == NULL) return false;
     return ((this -> rep) == (target -> rep));
 }
 
 PTR(Val) NumExpr::interp(PTR(Env) env){
-    return new NumVal(this -> rep);
+    return NEW(NumVal)(rep);
 }
 
 void NumExpr::print(std::ostream& os){
     os << (this -> rep);
 }
 
-void NumExpr::pretty_print(std::ostream &os){
-    pretty_print_at(os, 0, 0);
-}
-
-void NumExpr::pretty_print_at(std::ostream& os, int level, int space){
+void NumExpr::pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space){
     os << (this -> rep);
 };
 
@@ -86,7 +82,7 @@ AddExpr::AddExpr(PTR(Expr) lhs, PTR(Expr) rhs){
 }
 
 bool AddExpr::equals(PTR(Expr) e){
-    PTR(AddExpr) target = dynamic_cast<PTR(AddExpr)>(e);
+    PTR(AddExpr) target = CAST(AddExpr)(e);
     if (target == NULL) return false;
     return (((this->lhs) -> equals (target->lhs))
             && ((this->rhs) -> equals (target->rhs)));
@@ -105,20 +101,19 @@ void AddExpr::print(std::ostream& os){
     os << ')';
 }
 
-void AddExpr::pretty_print(std::ostream &os){
-    (this -> lhs) -> pretty_print_at(os, 1, 0);
-    os << " + ";
-    (this -> rhs) -> pretty_print_at(os, 6, 0);
-}
-
-void AddExpr::pretty_print_at(std::ostream& os, int level, int space){
-    if (level == 1 || level == 3 || level == 4){
+void AddExpr::pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space){
+    /*
+     When does AddExpr need ()?
+     1. AddExpr is inside the MultExpr (both lhs and rhs)
+     2. AddExpr is inside the AddExpr and is at lhs
+     */
+    if ((type >= prec_mult) || (type == prec_add && at_left)){
         os << "(";
     }
-    (this -> lhs) -> pretty_print_at(os, 3, space);
+    (this -> lhs) -> pretty_print_at(os, prec_add, true, space);
     os << " + ";
-    (this -> rhs) -> pretty_print_at(os, 6, space);
-    if (level == 1 || level == 3 || level == 4){
+    (this -> rhs) -> pretty_print_at(os, prec_add, false, space);
+    if ((type >= prec_mult) || (type == prec_add && at_left)){
         os << ")";
     }
 }
@@ -140,7 +135,7 @@ MultExpr::MultExpr(PTR(Expr) lhs, PTR(Expr) rhs){
 }
 
 bool MultExpr::equals(PTR(Expr) e){
-    PTR(MultExpr) target = dynamic_cast<PTR(MultExpr)>(e);
+    PTR(MultExpr) target = CAST(MultExpr)(e);
     if (target == NULL) return false;
     return (((this->lhs) -> equals (target->lhs))
             && ((this->rhs) -> equals (target->rhs)));
@@ -159,27 +154,19 @@ void MultExpr::print(std::ostream& os){
     os << ')';
 }
 
-void MultExpr::pretty_print(std::ostream &os){
-    (this -> lhs) -> pretty_print_at(os, 4, 0);
+void MultExpr::pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space){
+    /*
+     When does AddExpr need ()?
+     1. MultExpr is inside MultExpr and is at lhs
+     */
+    if (type >= prec_mult && at_left){
+        os << "(";
+    }
+    (this -> lhs) -> pretty_print_at(os, prec_mult, true, space);
     os << " * ";
-    (this -> rhs) -> pretty_print_at(os, 1, 0);
-}
-
-void MultExpr::pretty_print_at(std::ostream& os, int level, int space){
-    if (level == 3){
-        (this -> lhs) -> pretty_print_at(os, 4, space);
-        os << " * ";
-        (this -> rhs) -> pretty_print_at(os, 3, space);
-    } else {
-        if (level == 4){
-            os << "(";
-        }
-        (this -> lhs) -> pretty_print_at(os, 4, space);
-        os << " * ";
-        (this -> rhs) -> pretty_print_at(os, 1, space);
-        if (level == 4){
-            os << ")";
-        }
+    (this -> rhs) -> pretty_print_at(os, prec_mult, false, space);
+    if (type >= prec_mult && at_left){
+        os << ")";
     }
 }
 
@@ -198,7 +185,7 @@ VarExpr::VarExpr(std::string str){
 }
 
 bool VarExpr::equals(PTR(Expr) e){
-    PTR(VarExpr) target = dynamic_cast<PTR(VarExpr)>(e);
+    PTR(VarExpr) target = CAST(VarExpr)(e);
     if (target == NULL) return false;
     return ((this -> str) == (target -> str));
 }
@@ -211,11 +198,7 @@ void VarExpr::print(std::ostream& os){
     os << (this -> str);
 }
 
-void VarExpr::pretty_print(std::ostream &os){
-    pretty_print_at(os, 0, 0);
-}
-
-void VarExpr::pretty_print_at(std::ostream& os, int level, int space){
+void VarExpr::pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space){
     os << (this -> str);
 };
 
@@ -235,7 +218,7 @@ LetExpr::LetExpr(PTR(VarExpr) var, PTR(Expr) rhs, PTR(Expr) body){
 }
 
 bool LetExpr::equals(PTR(Expr) e){
-    PTR(LetExpr) target = dynamic_cast<PTR(LetExpr)>(e);
+    PTR(LetExpr) target = CAST(LetExpr)(e);
     if (target == NULL) return false;
     return ( (this->var) -> equals (target->var)
             && (this->rhs) -> equals (target->rhs)
@@ -245,7 +228,7 @@ bool LetExpr::equals(PTR(Expr) e){
 
 PTR(Val) LetExpr::interp(PTR(Env) env){
     PTR(Val) rhs_val = this -> rhs -> interp(env);
-    PTR(Env) sub_env = new ExtendedEnv(var->str, rhs_val, env);
+    PTR(Env) sub_env = NEW(ExtendedEnv)(var->str, rhs_val, env);
     return body -> interp(sub_env);
 }
 
@@ -259,33 +242,29 @@ void LetExpr::print(std::ostream& os){
     os << ")";
 }
 
-void LetExpr::pretty_print(std::ostream &os){
-    os << "_let " << (this -> var) -> to_string() << " = ";
-    (this -> rhs) -> pretty_print_at(os, 0, 0);
-    os << "\n";
-    int space = (int)os.tellp();
-    os << "_in ";
-    (this -> body) -> pretty_print_at(os, 0, space);
-}
-
-void LetExpr::pretty_print_at(std::ostream& os, int level, int space){
-    if (level == 3 || level == 4 || level == 5){
+void LetExpr::pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space){
+    /*
+     When does LetExpr need ()?
+     1. LetExpr is inside AddExpr and at its left side
+     2. LetExpr is inside MultExpr and at its left side
+     3. LetExpr is inside EqualExpr and at its left side
+     */
+    if (type >= prec_equal){
         os << "(";
     }
-    int current_position = (int)os.tellp();
-    int spaces = current_position - space;
+    
     os << "_let " << (this -> var) -> to_string() << " = ";
-    (this -> rhs) -> pretty_print_at(os, 0, space);
+    (this -> rhs) -> pretty_print_at(os, prec_keywords, false, space+5);
     os << "\n";
-    space = (int)os.tellp();
     int count = 0;
-    while (count < spaces){
+    while (count < space){
         os << " ";
         count++;
     }
     os << "_in ";
-    (this -> body) -> pretty_print_at(os, 0, space);
-    if (level == 3 || level == 4 || level == 5){
+    (this -> body) -> pretty_print_at(os, prec_keywords, false, space+4);
+    
+    if (type >= prec_equal){
         os << ")";
     }
 }
@@ -294,7 +273,7 @@ void LetExpr::step_interp() {
     Step::mode = Step::interp_mode;
     Step::expr = rhs;
     Step::env = Step::env;
-    Step::cont = new LetBodyCont((this -> var) -> to_string(),
+    Step::cont = NEW(LetBodyCont)((this -> var) -> to_string(),
                                  (this -> body),
                                  Step::env,
                                  Step::cont);
@@ -308,13 +287,13 @@ BoolExpr::BoolExpr(bool rep){
 }
 
 bool BoolExpr::equals(PTR(Expr) e){
-    PTR(BoolExpr) target = dynamic_cast<PTR(BoolExpr)>(e);
+    PTR(BoolExpr) target = CAST(BoolExpr)(e);
     if (target == NULL) return false;
     return (this -> rep) == (target -> rep);
 }
 
 PTR(Val) BoolExpr::interp(PTR(Env) env){
-    return new BoolVal(this -> rep);
+    return NEW(BoolVal)(this -> rep);
 }
 
 void BoolExpr::print(std::ostream& os){
@@ -325,11 +304,7 @@ void BoolExpr::print(std::ostream& os){
     }
 }
 
-void BoolExpr::pretty_print(std::ostream &os){
-    pretty_print_at(os, 0, 0);
-}
-
-void BoolExpr::pretty_print_at(std::ostream& os, int level, int space){
+void BoolExpr::pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space){
     if (this -> rep){
         os << "_true";
     }else{
@@ -352,7 +327,7 @@ EqualExpr::EqualExpr(PTR(Expr) lhs, PTR(Expr) rhs){
 }
 
 bool EqualExpr::equals(PTR(Expr) e){
-    PTR(EqualExpr) target = dynamic_cast<PTR(EqualExpr)>(e);
+    PTR(EqualExpr) target = CAST(EqualExpr)(e);
     if (target == NULL) return false;
     return ((this -> lhs) -> equals(target -> lhs)) &&
            ((this -> rhs) -> equals(target -> rhs));
@@ -360,9 +335,9 @@ bool EqualExpr::equals(PTR(Expr) e){
 
 PTR(Val) EqualExpr::interp(PTR(Env) env){
     if ((this -> lhs -> interp(env)) -> equals (this -> rhs -> interp(env)))
-        return new BoolVal(true);
+        return NEW(BoolVal)(true);
     else
-        return new BoolVal(false);
+        return NEW(BoolVal)(false);
 }
 
 void EqualExpr::print(std::ostream& os){
@@ -373,22 +348,21 @@ void EqualExpr::print(std::ostream& os){
     os << ")";
 }
 
-void EqualExpr::pretty_print(std::ostream &os){
-    (this -> lhs) -> pretty_print_at(os, 5, 0);
-    os << " == ";
-    (this -> rhs) -> pretty_print_at(os, 0, 0);
-}
 
-void EqualExpr::pretty_print_at(std::ostream& os, int level, int space){
-    if (level == 0){
-        (this -> lhs) -> pretty_print_at(os, 5, space);
-        os << " == ";
-        (this -> rhs) -> pretty_print_at(os, 0, space);
-    } else {
+void EqualExpr::pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space){
+    /*
+     When does EqualExpr need ()?
+     1. EqualExpr is inside AddExpr
+     2. EqualExpr is inside MultExpr
+     3. EqualExpr is inside EqualExpr and is lhs
+     */
+    if (type >= prec_add || (type == prec_equal && at_left)){
         os << "(";
-        (this -> lhs) -> pretty_print_at(os, 5, space);
-        os << " == ";
-        (this -> rhs) -> pretty_print_at(os, 0, space);
+    }
+    (this -> lhs) -> pretty_print_at(os, prec_equal, true, space);
+    os << " == ";
+    (this -> rhs) -> pretty_print_at(os, prec_equal, false, space);
+    if (type >= prec_add || (type == prec_equal && at_left)){
         os << ")";
     }
 }
@@ -411,7 +385,7 @@ IfExpr::IfExpr(PTR(Expr) test_part, PTR(Expr) then_part, PTR(Expr) else_part){
 }
 
 bool IfExpr::equals(PTR(Expr) e){
-    PTR(IfExpr) target = dynamic_cast<PTR(IfExpr)>(e);
+    PTR(IfExpr) target = CAST(IfExpr)(e);
     if (target == NULL) return false;
     return ((this -> test_part) -> equals(target -> test_part) &&
             (this -> then_part) -> equals(target -> then_part) &&
@@ -421,7 +395,7 @@ bool IfExpr::equals(PTR(Expr) e){
 PTR(Val) IfExpr::interp(PTR(Env) env){
     // cast the test_part
     PTR(Val) test = this -> test_part -> interp(env);
-    PTR(BoolVal) test_val = dynamic_cast<PTR(BoolVal)>(test);
+    PTR(BoolVal) test_val = CAST(BoolVal)(test);
     // null: test_part is not a boolean value, error
     if (test_val == NULL){
         throw std::runtime_error("IfExpr's condition is not a boolean value.");
@@ -446,50 +420,39 @@ void IfExpr::print(std::ostream& os){
     os << "))";
 }
 
-void IfExpr::pretty_print(std::ostream &os){
-    os << "_if ";
-    (this -> test_part) ->pretty_print_at(os, 0, 0);
-    os << "\n";
-    int space = (int)os.tellp();
-    os << "_then ";
-    (this -> then_part) ->pretty_print_at(os, 0, space);
-    os << "\n";
-    space = (int)os.tellp();
-    os << "_else ";
-    (this -> else_part) -> pretty_print_at(os, 0, space);
-}
-
-void IfExpr::pretty_print_at(std::ostream& os, int level, int space){
-    if (level == 3 || level == 4 || level == 5){
+void IfExpr::pretty_print_at(std::ostream& os, precedence_t type, bool is_left, int space){
+    /*
+     When does IfExpr need ()?
+     1. IfExpr is inside AddExpr and at its lhs
+     2. IfExpr is inside MultExpr and at its lhs
+     3. IfExpr is inside EqualExpr and at its lhs
+     */
+    if (type >= prec_equal && is_left){
         os << "(";
     }
     
-    int current_position = (int)os.tellp();
-    int spaces = current_position - space;
-    
     os << "_if ";
-    (this -> test_part) -> pretty_print_at(os, 0, space);
+    (this -> test_part) -> pretty_print_at(os, prec_keywords, false, space+4);
     os << "\n";
     
-    space = (int)os.tellp();
     int count = 0;
-    while (count < spaces){
+    while (count < space){
         os << " ";
         count++;
     }
     os << "_then ";
-    (this -> then_part) -> pretty_print_at(os, 0, space);
+    (this -> then_part) -> pretty_print_at(os, prec_keywords, false, space+6);
     os << "\n";
     
-    space = (int)os.tellp();
     count = 0;
-    while (count < spaces){
+    while (count < space){
         os << " ";
         count++;
     }
     os << "_else ";
-    (this -> else_part) -> pretty_print_at(os, 0, space);
-    if (level == 3 || level == 4 || level == 5){
+    (this -> else_part) -> pretty_print_at(os, prec_keywords, false, space+6);
+    
+    if (type >= prec_equal && is_left){
         os << ")";
     }
 }
@@ -511,22 +474,14 @@ FunExpr::FunExpr (std::string formal_arg, PTR(Expr) body) {
 }
 
 bool FunExpr::equals(PTR(Expr) e) {
-    PTR(FunExpr) target = dynamic_cast<PTR(FunExpr)>(e);
+    PTR(FunExpr) target = CAST(FunExpr)(e);
     if (target == NULL) return false;
     return (((this -> formal_arg) == (target -> formal_arg)) &&
             (this -> body) -> equals(target -> body));
 }
 
-/*
- FunVal::FunVal(std::string formal_arg, PTR(Expr) body, PTR(Env) env){
-     this -> formal_arg = formal_arg;
-     this -> body = body;
-     this -> env = env;
- }
- */
-
 PTR(Val) FunExpr::interp(PTR(Env) env) {
-    return new FunVal(formal_arg, body, env);
+    return NEW(FunVal)(formal_arg, body, env);
 }
 
 void FunExpr::print(std::ostream& os) {
@@ -535,12 +490,23 @@ void FunExpr::print(std::ostream& os) {
     os << ")";
 }
 
-void FunExpr::pretty_print(std::ostream &os){
-    print(os);
-}
-
-void FunExpr::pretty_print_at(std::ostream& os, int level, int space) {
-    print(os);
+void FunExpr::pretty_print_at(std::ostream& os, precedence_t type, bool is_left, int space) {
+    /*
+     When does FunExpr need ()?
+     1. FunExpr is inside AddExpr and at its lhs
+     2. FunExpr is inside MultExpr and at its lhs
+     3. FunExpr is inside EqualExpr and at its lhs
+     */
+    if (type >= prec_equal && is_left){
+        os << "(";
+    }
+    
+    os << "_fun (" << formal_arg << ") ";
+    this -> body -> pretty_print_at(os, prec_keywords, false, space);
+    
+    if (type >= prec_equal && is_left){
+        os << ")";
+    }
 }
 
 void FunExpr::step_interp() {
@@ -557,7 +523,7 @@ CallExpr::CallExpr (PTR(Expr) to_be_called, PTR(Expr) actual_arg) {
 }
 
 bool CallExpr::equals(PTR(Expr) e) {
-    PTR(CallExpr) target = dynamic_cast<PTR(CallExpr)>(e);
+    PTR(CallExpr) target = CAST(CallExpr)(e);
     if (target == NULL) return false;
     return ((this -> to_be_called) -> equals(target -> to_be_called) &&
             (this -> actual_arg) -> equals(target->actual_arg));
@@ -574,12 +540,25 @@ void CallExpr::print(std::ostream& os) {
     os << ")";
 }
 
-void CallExpr::pretty_print(std::ostream &os){
-    print(os);
-}
-
-void CallExpr::pretty_print_at(std::ostream& os, int level, int space) {
-    print(os);
+void CallExpr::pretty_print_at(std::ostream& os, precedence_t type, bool is_left, int space) {
+    /*
+     When does CallExpr need ()?
+     1. CallExpr is inside AddExpr and at its lhs
+     2. CallExpr is inside MultExpr and at its lhs
+     3. CallExpr is inside EqualExpr and at its lhs
+     */
+    if (type >= prec_equal && is_left){
+        os << "(";
+    }
+    
+    this -> to_be_called -> pretty_print_at(os, prec_keywords, false, space);
+    os << " (";
+    this -> actual_arg -> pretty_print_at(os, prec_keywords, false, space);
+    os << ")";
+    
+    if (type >= prec_equal && is_left){
+        os << ")";
+    }
 }
 
 void CallExpr::step_interp() {
