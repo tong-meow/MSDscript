@@ -17,19 +17,17 @@ class Env;
 
 
 
-//typedef enum {
-//    prec_none,            // = 0
-//    prec_inner_let,       // = 1
-//    prec_let,             // = 2
-//    prec_equal,           // = 3
-//    prec_inner_add,       // = 4
-//    prec_add,             // = 5
-//    prec_mult             // = 6
-//} precedence_t;
+typedef enum {
+    prec_none,            // = 0, NumExpr, VarExpr, BoolExpr
+    prec_keywords,        // = 1, LetExpr, IfExpr, FunExpr, CallExpr
+    prec_equal,           // = 2, EqualExpr
+    prec_add,             // = 3, AddExpr
+    prec_mult             // = 4, MultExpr
+} precedence_t;
 
 
 // template Expr
-class Expr {
+CLASS (Expr) {
 public:
     // equals determines whether 2 Expr is equal or not
     virtual bool equals(PTR(Expr) e) = 0;
@@ -42,9 +40,9 @@ public:
     std::string to_string();
     
     // pretty_print is used to print the Expr to a referenced ostream (with better layout)
-    virtual void pretty_print(std::ostream& os) = 0;
+    void pretty_print(std::ostream& os);
     // pretty_print_at is the helper of pretty_print()
-    virtual void pretty_print_at(std::ostream& os, int level, int space) = 0;
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space) = 0;
     // to_pretty_string is used to convert an Expr to its string version with pretty_print()
     std::string to_pretty_string();
     
@@ -61,8 +59,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -77,8 +74,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -93,8 +89,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -108,8 +103,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -126,8 +120,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -141,8 +134,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -157,8 +149,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -174,8 +165,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -190,8 +180,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 
@@ -206,8 +195,7 @@ public:
     virtual bool equals(PTR(Expr) e);
     virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& os);
-    virtual void pretty_print(std::ostream& os);
-    virtual void pretty_print_at(std::ostream& os, int level, int space);
+    virtual void pretty_print_at(std::ostream& os, precedence_t type, bool at_left, int space);
     void step_interp();
 };
 

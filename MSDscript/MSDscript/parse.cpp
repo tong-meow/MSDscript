@@ -11,6 +11,7 @@
 #include "parse.hpp"
 #include "pointer.hpp"
 
+
 /*////////////////// HELPER FUNCTIONS //////////////////*/
 
 PTR(Expr) parse(std::string str){
@@ -125,7 +126,7 @@ PTR(Expr) parse_num(std::istream &in){
         number = number * (-1);
     }
 
-    return new NumExpr(number);
+    return NEW(NumExpr)(number);
 }
 
 
@@ -146,7 +147,7 @@ PTR(Expr) parse_var(std::istream &in){
         c = in.peek();
     }
     
-    return new VarExpr(variable);
+    return NEW(VarExpr)(variable);
 }
 
 
@@ -161,7 +162,7 @@ PTR(Expr) parse_let(std::istream &in){
     
     // parse var
     skip_whitespace(in);
-    var = dynamic_cast<PTR(VarExpr)>(parse_var(in));
+    var = CAST(VarExpr)(parse_var(in));
     if (var == NULL){
         throw std::runtime_error("Invalid input (parse_let, parse_var).");
     }
@@ -190,7 +191,7 @@ PTR(Expr) parse_let(std::istream &in){
     }
     
     skip_whitespace(in);
-    return new LetExpr(var, rhs, body);
+    return NEW(LetExpr)(var, rhs, body);
 }
 
 
@@ -226,7 +227,7 @@ PTR(Expr) parse_if(std::istream &in){
         throw std::runtime_error("Invalid input (parse_if).");
     }
     
-    return new IfExpr(test_part, then_part, else_part);
+    return NEW(IfExpr)(test_part, then_part, else_part);
 }
 
 
@@ -241,7 +242,7 @@ PTR(Expr) parse_fun(std::istream &in){
     if (c == '('){
         consume(in, c);
         skip_whitespace(in);
-        formal_arg = dynamic_cast<PTR(VarExpr)>(parse_var(in));
+        formal_arg = CAST(VarExpr)(parse_var(in));
         if (formal_arg == NULL){
             throw std::runtime_error("Invalid input (parse_fun).");
         }
@@ -262,7 +263,7 @@ PTR(Expr) parse_fun(std::istream &in){
     skip_whitespace(in);
     body = parse_expr(in);
     
-    return new FunExpr(formal_arg -> to_string(), body);
+    return NEW(FunExpr)(formal_arg -> to_string(), body);
 }
 
 
@@ -299,7 +300,7 @@ PTR(Expr) parse_expr(std::istream &in){
         if (keyword == "=="){
             skip_whitespace(in);
             PTR(Expr) e = parse_expr(in);
-            return new EqualExpr(comparg, e);
+            return NEW(EqualExpr)(comparg, e);
         }
         else{
             throw std::runtime_error("Invalid input (parse_expr).");
@@ -322,7 +323,7 @@ PTR(Expr) parse_comparg(std::istream &in){
         consume(in, c);
         skip_whitespace(in);
         PTR(Expr) comparg = parse_comparg(in);
-        return new AddExpr(addend, comparg);
+        return NEW(AddExpr)(addend, comparg);
     }
     else {
         return addend;
@@ -343,7 +344,7 @@ PTR(Expr) parse_addend(std::istream &in){
         consume(in, c);
         skip_whitespace(in);
         PTR(Expr) addend = parse_addend(in);
-        return new MultExpr(multicand, addend);
+        return NEW(MultExpr)(multicand, addend);
     }
     else {
         return multicand;
@@ -365,7 +366,7 @@ PTR(Expr) parse_multicand(std::istream &in){
         actual_arg = parse_expr(in);
         skip_whitespace(in);
         consume(in, ')');
-        e = new CallExpr(e, actual_arg);
+        e = NEW(CallExpr)(e, actual_arg);
     }
     skip_whitespace(in);
     
@@ -413,10 +414,10 @@ PTR(Expr) parse_inner(std::istream &in) {
             return parse_fun(in);
         }
         else if (keyword == "_true"){
-            return new BoolExpr(true);
+            return NEW(BoolExpr)(true);
         }
         else if (keyword == "_false"){
-            return new BoolExpr(false);
+            return NEW(BoolExpr)(false);
         }
         else{
             throw std::runtime_error("Invalid input (parse_inner, keyword error)");

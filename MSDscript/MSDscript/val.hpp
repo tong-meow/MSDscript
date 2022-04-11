@@ -16,7 +16,7 @@ class Env;
 class Cont;
 
 // template Val
-class Val {
+CLASS (Val) {
 public:
     
     virtual bool equals(PTR(Val) v) = 0;

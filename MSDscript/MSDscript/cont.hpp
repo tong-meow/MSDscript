@@ -17,7 +17,7 @@ class Env;
 class Val;
 
 
-class Cont {
+CLASS (Cont) {
 public:
     static PTR(Cont) done;
     

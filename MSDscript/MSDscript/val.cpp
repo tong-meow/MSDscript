@@ -23,13 +23,13 @@ NumVal::NumVal(int rep){
 }
 
 bool NumVal::equals(PTR(Val) v){
-    PTR(NumVal) target = dynamic_cast<PTR(NumVal)>(v);
+    PTR(NumVal) target = CAST(NumVal)(v);
     if (target == NULL) return false;
     return ((this -> rep) == (target -> rep));
 }
 
 PTR(Expr) NumVal::to_expr(){
-    return new NumExpr(this -> rep);
+    return NEW(NumExpr)(this -> rep);
 }
 
 std::string NumVal::to_string(){
@@ -37,19 +37,19 @@ std::string NumVal::to_string(){
 }
 
 PTR(Val) NumVal::add_to(PTR(Val) v){
-    PTR(NumVal) target = dynamic_cast<PTR(NumVal)>(v);
+    PTR(NumVal) target = CAST(NumVal)(v);
     if (target == nullptr) {
         throw std::runtime_error("Error: rhs of Val add_to() must be a NumVal.");
     }
-    return new NumVal((this -> rep) + (target -> rep));
+    return NEW(NumVal)((this -> rep) + (target -> rep));
 }
 
 PTR(Val) NumVal::mult_by(PTR(Val) v){
-    PTR(NumVal) target = dynamic_cast<PTR(NumVal)>(v);
+    PTR(NumVal) target = CAST(NumVal)(v);
     if (target == nullptr) {
         throw std::runtime_error("Error: rhs of Val mult_by() must be a NumVal.");
     }
-    return new NumVal((this -> rep) * (target -> rep));
+    return NEW(NumVal)((this -> rep) * (target -> rep));
 }
 
 PTR(Val) NumVal::call(PTR(Val) arg){
@@ -70,7 +70,7 @@ BoolVal::BoolVal(bool val){
 }
 
 bool BoolVal::equals(PTR(Val) v){
-    PTR(BoolVal) target = dynamic_cast<PTR(BoolVal)>(v);
+    PTR(BoolVal) target = CAST(BoolVal)(v);
     if (target == NULL) return false;
     return ((this -> rep) == (target -> rep));
 }
@@ -114,7 +114,7 @@ FunVal::FunVal(std::string formal_arg, PTR(Expr) body, PTR(Env) env){
 }
 
 bool FunVal::equals(PTR(Val) val) {
-    PTR(FunVal) target = dynamic_cast<PTR(FunVal)>(val);
+    PTR(FunVal) target = CAST(FunVal)(val);
     if (target == NULL) return false;
     else {
         return (this -> formal_arg == target -> formal_arg &&
@@ -123,7 +123,7 @@ bool FunVal::equals(PTR(Val) val) {
 }
 
 PTR(Expr) FunVal::to_expr() {
-    return new FunExpr(this -> formal_arg, this -> body);
+    return NEW(FunExpr)(this -> formal_arg, this -> body);
 }
 
 std::string FunVal::to_string() {
@@ -140,7 +140,7 @@ PTR(Val) FunVal::mult_by(PTR(Val) v) {
 }
 
 PTR(Val) FunVal::call(PTR(Val) arg) {
-    return body -> interp(new ExtendedEnv(this -> formal_arg,
+    return body -> interp(NEW(ExtendedEnv)(this -> formal_arg,
                                           arg,
                                           this -> env));
 }

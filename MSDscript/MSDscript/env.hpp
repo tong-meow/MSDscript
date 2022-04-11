@@ -17,7 +17,7 @@
 class Val;
 
 // template Env
-class Env{
+CLASS (Env){
     
 public:
     virtual bool equals(PTR(Env) env) = 0;
