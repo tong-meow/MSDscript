@@ -15,9 +15,13 @@ MSDscript is an interpreter application built with C++. This interpreter support
 7. Condition (if...then...else...) structure: support "_if \<condition\> _then \<result 1\> _else \<result 2\>" structure.
 8. Function structure and calculate: support "_fun \<function name\> \<function expression\>" sturcture, and support its usage
 
+To utilize the MSDscript, you could compile and do your work with the executable it produces, or, if you are programming, you could use the library of the MSDscript. 
+
+To do the former one, please follow the instruction of the Part A and Part B. To do the latter one, please follow the Part C.
 
 
-## Getting Started
+
+## Part A. Getting Started
 
 \* currently supports only <u>MacOS or Linux</u> operating systems.
 
@@ -29,9 +33,11 @@ Please follow these steps in order:
 
 
 
-## User Guide
+## Part B. User Guide
 
 After running `MSDscript`, user can simply type expressions in the terminal and let MSDscript do the parse and calculation.
+
+
 
 ### General Guide
 
@@ -70,6 +76,8 @@ User can just simply add `--step` keywords in terminal command.
 3. Now you can enter what you would like to interp or print. Space and new lines are supported. 
 
 4. If you press `Control + D`, the MSDscript starts working by reading what you have input.
+
+
 
 ### Supported Expression
 
@@ -113,7 +121,7 @@ Invalid input: `true`, `false`, `0`,  `1`
 
 In MSDscript, additions are supported and named `AddExpr`.
 
-To use an `AddExpr`, type left-hand side expression, `+` and then follow the right-hand side expression. Spaces and parathesis are supported.
+To use an `AddExpr`, type left-hand side expression, `+` and then follow the right-hand side expression. Note that the `+` requires number values from its subexpressions. For example, 	`a + 1` is not valid unless `a`'s value is defined. Spaces and parathesis are supported.
 
 **Example**
 
@@ -125,7 +133,7 @@ Invalid input: `(a + 2`, `b + 1)`, `+2`, `a+`
 
 In MSDscript, multiplication are supported and named `MultExpr`.
 
-To use a `MultExpr`, type left-hand side expression, `*` and then follow the right-hand side expression. Spaces and parathesis are supported.
+To use a `MultExpr`, type left-hand side expression, `*` and then follow the right-hand side expression. Note that the `*` requires number values from its subexpressions. For example, 	`a * 1` is not valid unless `a`'s value is defined. Spaces and parathesis are supported.
 
 **Example**
 
@@ -137,7 +145,7 @@ Invalid input: `(a * 2`, `b * 1)`, `*2`, `a*`
 
 In MSDscript, comparison are supported and named `EqualExpr`.
 
-To use a `EqualExpr`, type left-hand side expression, `==` and then follow the right-hand side expression. Spaces and parathesis are supported.
+To use a `EqualExpr`, type left-hand side expression, `==` and then follow the right-hand side expression. Spaces and parathesis are supported. Note that the `==` works on any two values, and it always produce a boolean value (`BoolVal`).
 
 **Example**
 
@@ -152,9 +160,11 @@ In MSDscript, variable assignment are supported and named `LetExpr`.
 To use a `LetExpr`, follow this structure:
 
 ```
-_let <variableName> = <value>
-_in <variable be utilized>
+_let <variableName> = <expression>
+_in <body expression>
 ```
+
+Note that `_let` can be referenced only after `<body expression>` after `_in` keyword, or it is out of scope.
 
 **Example**
 
@@ -162,12 +172,12 @@ Valid input:
 
 ```
 1.
-_let a = 2
+_let a = 1 + 1
 _in a + 4
 // if the user is running interp, then the result will be 6.
 
 2.
-_let b = 3+7 _in 1
+(_let b = 3+7 _in 1)
 // if the user is running interp, then the result will be 1.
 ```
 
@@ -177,7 +187,6 @@ Invalid input:
 1.
 _let 5
 _in 3+a
-// this only works if in the upper level the user has defined a's value
 
 2.
 _let a = 4 _in b
@@ -241,6 +250,8 @@ _fun (<input>) <expression>
 (_fun (<input>) <expression>)(<inputExpr>)
 ```
 
+As an expression, the `FunExpr` works as same as the way of `NumExpr` or `BoolExpr  `. Besides, just like a `NumExpr` produces a number value and a `BoolExpr` produces a boolean value, the `FunExpr` produces a function value.
+
 **Example**
 
 Valid input:
@@ -261,19 +272,21 @@ Invalid input:
 _fun (x) x*2 (5)
 ```
 
-### Files
+### 
 
-#### Functional classes files
+## Part C. Library Guide
 
-- `val.cpp` and `val.hpp`: defines value types.
-- `expr.cpp` and `expr.hpp`: defines expressions and there structures.
-- `env.cpp` and `env.hpp`: defines MSDscript expression's environments (for refering variable's values).
-- `cont.cpp` and `cont.hpp`: defines the step mode interpretation.
-- `step.cpp` and `step.hpp`: defines the step mode interpretation.
+### Include the .a File
 
-#### Helper classes files
+The MSDscript has a `.a` library file within the repository. If you would like to use it directly in your program, please follow the steps below.
 
-- `main.cpp`: runable class that allows msdscript to be run on terminal.
-- `parse.cpp` and `parse.hpp`: allows msdscript to read from the terminal and parse human readble strings to MSDscript expressions.
-- `pointer.hpp`: allows MSDscript to switch between using or not using shared pointers.
-
+- Download the `msdscript.a` file.
+  - The `msdscript.a` is compiled with file `expr.o`, `val.o`, `env.o`,  `step.o` and `cont.o`
+- Put the `msdscript.a` file in the current working fold.
+- To use the expressions mentioned in **Part B: Supported Expression**, download and include the `.h` file you would like to use.
+  - `val.hpp`: defines value types for number value, boolean value and function value.
+  - `expr.hpp`: defines all the expressions.
+  - `env.hpp`: defines expression's environments (for refering variable's values).
+  - `cont.hpp` and `step.hpp`: defines the step mode interpretation.
+- If you use any of the header files, you must also include the `pointer.hpp` file.
+- When doing compilation, remember to add `-L lib`, and include whatever `.h` files you use. 
